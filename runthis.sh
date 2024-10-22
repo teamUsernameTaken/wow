@@ -1,6 +1,5 @@
 #!/usr/bin/bash
 
-
 PASSWORD="!@#123qweQWE"
 
 info(){
