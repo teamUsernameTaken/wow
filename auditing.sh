@@ -89,7 +89,50 @@ check_broken_packages() {
     echo "Look for: Any packages listed as broken, which may need repair or reinstallation"
 }
 
+install_auditd() {
+    echo "Installing AuditD:"
+    if ! sudo apt install auditd -y; then
+        echo "Error: Unable to install AuditD"
+        return 1
+    fi
+    echo "AuditD installed successfully"
+}
+
+add_audit_rules() {
+    echo "Adding Audit Rules:"
+    local rules_file="/etc/audit/rules.d/audit.rules"
+    
+    # Check if the file exists
+    if [ ! -f "$rules_file" ]; then
+        echo "Error: $rules_file does not exist"
+        return 1
+    fi
+
+    # Add rules if they don't already exist
+    if ! grep -q "passwd_changes" "$rules_file"; then
+        echo "-w /etc/passwd -p wa -k passwd_changes" | sudo tee -a "$rules_file"
+    fi
+    if ! grep -q "shadow_changes" "$rules_file"; then
+        echo "-w /etc/shadow -p wa -k shadow_changes" | sudo tee -a "$rules_file"
+    fi
+
+    # Restart AuditD to apply new rules
+    if ! sudo systemctl restart auditd; then
+        echo "Error: Unable to restart AuditD"
+        return 1
+    fi
+    echo "Audit rules added and AuditD restarted successfully"
+}
+
+find_world_writable_files() {
+    echo "Finding world-writable files:"
+    sudo find / -perm -2 ! -type l -ls
+    echo "Look for: Files with unexpected world-writable permissions"
+}
+
 run_all_checks() {
+    install_auditd
+    add_audit_rules
     check_apparmor
     start_enable_auditd
     check_avc_messages
@@ -103,24 +146,28 @@ run_all_checks() {
     find_large_png_files
     find_recent_png_files
     check_broken_packages
+    find_world_writable_files
 }
 
 show_menu() {
     echo "Diagnostic Logging Menu:"
-    echo "1) Check AppArmor status"
-    echo "2) Start and enable auditd"
-    echo "3) Check AVC messages"
-    echo "4) Check system calls"
-    echo "5) Check file access logs"
-    echo "6) Check user account and role changes"
-    echo "7) Check executed commands"
-    echo "8) View all audit logs for today"
-    echo "9) Setup shadow file access monitoring"
-    echo "10) Check failed login attempts"
-    echo "11) Find large PNG files"
-    echo "12) Find recently modified PNG files"
-    echo "13) Check for broken packages"
-    echo "14) Run all checks"
+    echo "1) Install AuditD"
+    echo "2) Add Audit Rules"
+    echo "3) Check AppArmor status"
+    echo "4) Start and enable auditd"
+    echo "5) Check AVC messages"
+    echo "6) Check system calls"
+    echo "7) Check file access logs"
+    echo "8) Check user account and role changes"
+    echo "9) Check executed commands"
+    echo "10) View all audit logs for today"
+    echo "11) Setup shadow file access monitoring"
+    echo "12) Check failed login attempts"
+    echo "13) Find large PNG files"
+    echo "14) Find recently modified PNG files"
+    echo "15) Check for broken packages"
+    echo "16) Find world-writable files"
+    echo "17) Run all checks"
     echo "0) Exit"
     echo -n "Enter your choice: "
 }
@@ -134,20 +181,23 @@ main() {
         read choice
 
         case $choice in
-            1) check_apparmor | tee -a "$log_file" ;;
-            2) start_enable_auditd | tee -a "$log_file" ;;
-            3) check_avc_messages | tee -a "$log_file" ;;
-            4) check_system_calls | tee -a "$log_file" ;;
-            5) check_file_access_logs | tee -a "$log_file" ;;
-            6) check_user_changes | tee -a "$log_file" ;;
-            7) check_executed_commands | tee -a "$log_file" ;;
-            8) view_all_audit_logs | tee -a "$log_file" ;;
-            9) setup_shadow_monitoring | tee -a "$log_file" ;;
-            10) check_failed_logins | tee -a "$log_file" ;;
-            11) find_large_png_files | tee -a "$log_file" ;;
-            12) find_recent_png_files | tee -a "$log_file" ;;
-            13) check_broken_packages | tee -a "$log_file" ;;
-            14) run_all_checks | tee -a "$log_file" ;;
+            1) install_auditd | tee -a "$log_file" ;;
+            2) add_audit_rules | tee -a "$log_file" ;;
+            3) check_apparmor | tee -a "$log_file" ;;
+            4) start_enable_auditd | tee -a "$log_file" ;;
+            5) check_avc_messages | tee -a "$log_file" ;;
+            6) check_system_calls | tee -a "$log_file" ;;
+            7) check_file_access_logs | tee -a "$log_file" ;;
+            8) check_user_changes | tee -a "$log_file" ;;
+            9) check_executed_commands | tee -a "$log_file" ;;
+            10) view_all_audit_logs | tee -a "$log_file" ;;
+            11) setup_shadow_monitoring | tee -a "$log_file" ;;
+            12) check_failed_logins | tee -a "$log_file" ;;
+            13) find_large_png_files | tee -a "$log_file" ;;
+            14) find_recent_png_files | tee -a "$log_file" ;;
+            15) check_broken_packages | tee -a "$log_file" ;;
+            16) find_world_writable_files | tee -a "$log_file" ;;
+            17) run_all_checks | tee -a "$log_file" ;;
             0) echo "Exiting..."; exit 0 ;;
             *) echo "Invalid option. Please try again." ;;
         esac
