@@ -179,27 +179,20 @@ run_all_checks() {
 }
 
 show_menu() {
-    echo "Diagnostic Logging Menu:"
-    echo "1) Install AuditD"
-    echo "2) Add Audit Rules"
-    echo "3) Check AppArmor status"
-    echo "4) Start and enable auditd"
-    echo "5) Check AVC messages"
-    echo "6) Check system calls"
-    echo "7) Check file access logs"
-    echo "8) Check user account and role changes"
-    echo "9) Check executed commands"
-    echo "10) View all audit logs for today"
-    echo "11) Setup shadow file access monitoring"
-    echo "12) Check failed login attempts"
-    echo "13) Find large PNG files"
-    echo "14) Find recently modified PNG files"
-    echo "15) Check for broken packages"
-    echo "16) Find world-writable files"
-    echo "17) Monitor ports and services"
-    echo "18) Run all checks"
-    echo "0) Exit"
-    echo -n "Enter your choice: "
+    cat << EOF
+Diagnostic Logging Menu:
+1) Install AuditD              10) View all audit logs for today
+2) Add Audit Rules             11) Setup shadow file monitoring
+3) Check AppArmor status       12) Check failed login attempts
+4) Start and enable auditd     13) Find large PNG files
+5) Check AVC messages          14) Find recent PNG files
+6) Check system calls          15) Check for broken packages
+7) Check file access logs      16) Find world-writable files
+8) Check user account changes  17) Monitor ports and services
+9) Check executed commands     18) Run all checks
+0) Exit
+Enter your choice: 
+EOF
 }
 
 main() {
@@ -208,33 +201,37 @@ main() {
 
     while true; do
         show_menu
-        read choice
+        read -r choice
 
         case $choice in
-            1) install_auditd | tee -a "$log_file" ;;
-            2) add_audit_rules | tee -a "$log_file" ;;
-            3) check_apparmor | tee -a "$log_file" ;;
-            4) start_enable_auditd | tee -a "$log_file" ;;
-            5) check_avc_messages | tee -a "$log_file" ;;
-            6) check_system_calls | tee -a "$log_file" ;;
-            7) check_file_access_logs | tee -a "$log_file" ;;
-            8) check_user_changes | tee -a "$log_file" ;;
-            9) check_executed_commands | tee -a "$log_file" ;;
-            10) view_all_audit_logs | tee -a "$log_file" ;;
-            11) setup_shadow_monitoring | tee -a "$log_file" ;;
-            12) check_failed_logins | tee -a "$log_file" ;;
-            13) find_large_png_files | tee -a "$log_file" ;;
-            14) find_recent_png_files | tee -a "$log_file" ;;
-            15) check_broken_packages | tee -a "$log_file" ;;
-            16) find_world_writable_files | tee -a "$log_file" ;;
-            17) monitor_ports_and_services | tee -a "$log_file" ;;
-            18) run_all_checks | tee -a "$log_file" ;;
+            [1-9]|1[0-8]) 
+                func_name=$(sed "${choice}q;d" <<< "install_auditd
+add_audit_rules
+check_apparmor
+start_enable_auditd
+check_avc_messages
+check_system_calls
+check_file_access_logs
+check_user_changes
+check_executed_commands
+view_all_audit_logs
+setup_shadow_monitoring
+check_failed_logins
+find_large_png_files
+find_recent_png_files
+check_broken_packages
+find_world_writable_files
+monitor_ports_and_services
+run_all_checks")
+                echo "Running: $func_name"
+                $func_name | tee -a "$log_file"
+                ;;
             0) echo "Exiting..."; exit 0 ;;
             *) echo "Invalid option. Please try again." ;;
         esac
 
         echo "Press Enter to continue..."
-        read
+        read -r
     done
 }
 
