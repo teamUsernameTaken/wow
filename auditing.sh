@@ -130,6 +130,34 @@ find_world_writable_files() {
     echo "Look for: Files with unexpected world-writable permissions"
 }
 
+monitor_ports_and_services() {
+    echo "Monitoring Ports and Services:"
+    echo "Open ports:"
+    sudo netstat -tuln
+    echo "Look for: Unexpected open ports"
+
+    echo -e "\nActive services:"
+    systemctl list-units --type=service --state=active
+    echo "Look for: Unauthorized or unexpected active services"
+
+    echo -e "\nWould you like to disable any services? (y/n)"
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "Enter the name of the service you want to disable (or 'q' to quit):"
+        while true; do
+            read -r service_name
+            if [[ "$service_name" == "q" ]]; then
+                break
+            fi
+            echo "Disabling $service_name..."
+            sudo systemctl disable "$service_name"
+            sudo systemctl mask "$service_name.service"
+            echo "Service $service_name has been disabled and masked."
+            echo "Enter another service name to disable (or 'q' to quit):"
+        done
+    fi
+}
+
 run_all_checks() {
     install_auditd
     add_audit_rules
@@ -147,6 +175,7 @@ run_all_checks() {
     find_recent_png_files
     check_broken_packages
     find_world_writable_files
+    monitor_ports_and_services
 }
 
 show_menu() {
@@ -167,7 +196,8 @@ show_menu() {
     echo "14) Find recently modified PNG files"
     echo "15) Check for broken packages"
     echo "16) Find world-writable files"
-    echo "17) Run all checks"
+    echo "17) Monitor ports and services"
+    echo "18) Run all checks"
     echo "0) Exit"
     echo -n "Enter your choice: "
 }
@@ -197,7 +227,8 @@ main() {
             14) find_recent_png_files | tee -a "$log_file" ;;
             15) check_broken_packages | tee -a "$log_file" ;;
             16) find_world_writable_files | tee -a "$log_file" ;;
-            17) run_all_checks | tee -a "$log_file" ;;
+            17) monitor_ports_and_services | tee -a "$log_file" ;;
+            18) run_all_checks | tee -a "$log_file" ;;
             0) echo "Exiting..."; exit 0 ;;
             *) echo "Invalid option. Please try again." ;;
         esac
