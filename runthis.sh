@@ -437,7 +437,6 @@ selectionScreen(){
         "Run Background Tasks"
         "Setup Encrypted Directory"
         "Install and Configure OSSEC"
-        "Secure Remote Access"
     )
 
     while true; do
@@ -452,7 +451,6 @@ selectionScreen(){
                 6) runinBG; break;;
                 7) setupEncryptedDirectory; break;;
                 8) installConfigureOSSEC; break;;
-                9) secureRemoteAccess; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Unknown choice $REPLY"; break;
             esac
