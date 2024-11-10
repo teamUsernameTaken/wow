@@ -495,9 +495,6 @@ EOT
     # echo "Enabling SSH connection multiplexing..."
     # echo "MaxSessions 10" | sudo tee -a /etc/ssh/sshd_config
 
-    # Restart SSH service
-    sudo systemctl restart ssh
-
     echo "Remote Access security measures have been implemented."
 }
 
