@@ -350,15 +350,71 @@ showLogo() {
 }
 
 commencement() {
-    echo 'Welcome to the commencement script! Please be patient as this may take a while... (not)'
-    commencementUpdateAll
-    commencementInstallAll
-    commencementEnableAll
-    commencementConfigureUfw
-    commencementChangePermissions
-    commencementConfigureSSHD
-    commencementConfigureJaill
-    commencementUnattendedUpgrades
+    echo 'Welcome to the commencement script!'
+    
+    PS3="Select configurations to run (select multiple, choose Done when finished): "
+    
+    options=(
+        "Update All Systems"
+        "Install Required Packages"
+        "Enable Essential Services"
+        "Configure UFW Firewall"
+        "Change System Permissions"
+        "Configure SSHD"
+        "Configure Fail2ban Jail"
+        "Configure Unattended Upgrades"
+        "Run All"
+        "Done"
+    )
+    
+    selected=()
+    
+    while true; do
+        select opt in "${options[@]}"
+        do
+            case $opt in
+                "Run All")
+                    commencementUpdateAll
+                    commencementInstallAll
+                    commencementEnableAll
+                    commencementConfigureUfw
+                    commencementChangePermissions
+                    commencementConfigureSSHD
+                    commencementConfigureJaill
+                    commencementUnattendedUpgrades
+                    break 2
+                    ;;
+                "Done")
+                    # Execute selected configurations
+                    for item in "${selected[@]}"; do
+                        case $item in
+                            "Update All Systems") commencementUpdateAll ;;
+                            "Install Required Packages") commencementInstallAll ;;
+                            "Enable Essential Services") commencementEnableAll ;;
+                            "Configure UFW Firewall") commencementConfigureUfw ;;
+                            "Change System Permissions") commencementChangePermissions ;;
+                            "Configure SSHD") commencementConfigureSSHD ;;
+                            "Configure Fail2ban Jail") commencementConfigureJaill ;;
+                            "Configure Unattended Upgrades") commencementUnattendedUpgrades ;;
+                        esac
+                    done
+                    break 2
+                    ;;
+                *)
+                    if [[ " ${options[@]} " =~ " ${opt} " ]]; then
+                        # Add to selected array if not already present
+                        if [[ ! " ${selected[@]} " =~ " ${opt} " ]]; then
+                            selected+=("$opt")
+                            echo "Added: $opt"
+                        fi
+                    else
+                        echo "Invalid option"
+                    fi
+                    break
+                    ;;
+            esac
+        done
+    done
 }
 
 installConfigureOSSEC() {
