@@ -14,15 +14,16 @@ generate_string() {
         return 1
     fi
 
-    # For complex patterns, we'll use a more comprehensive character set
-    local chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/ '
-    local length=50  # Increased default length for complex patterns
-    local max_attempts=1000
+    # Extended character set including all possible characters needed
+    local chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/ \n\t'
+    local length=200  # Increased length for more complex patterns
+    local max_attempts=10000  # Increased attempts for complex patterns
     local attempt=0
     local result=""
     
     while ! echo "$result" | grep -E "^$pattern$" >/dev/null 2>&1; do
         result=""
+        # Generate longer string for complex patterns
         for ((i=0; i<length; i++)); do
             result+="${chars:RANDOM%${#chars}:1}"
         done
