@@ -470,30 +470,10 @@ secureRemoteAccess() {
 install usb-storage /bin/true
 EOT
     sudo update-initramfs -u
-
-    # # Configure SSH key-based authentication
-    # echo "Configuring SSH key-based authentication..."
-    # sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-    # sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-
-    # # Enable SSH two-factor authentication
-    # echo "Enabling SSH two-factor authentication..."
-    # sudo apt install -y libpam-google-authenticator
-    # sudo sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/' /etc/ssh/sshd_config
-    # sudo sed -i '/@include common-auth/a auth required pam_google_authenticator.so' /etc/pam.d/sshd
-
     # # Configure SSH to use a non-standard port
     # echo "Configuring SSH to use a non-standard port..."
     # local new_ssh_port=2222
     # sudo sed -i "s/^#Port 22/Port $new_ssh_port/" /etc/ssh/sshd_config
-
-    # # Implement IP whitelisting for SSH
-    # echo "Implementing IP whitelisting for SSH..."
-    # echo "AllowUsers *@192.168.1.0/24" | sudo tee -a /etc/ssh/sshd_config
-
-    # # Enable SSH connection multiplexing
-    # echo "Enabling SSH connection multiplexing..."
-    # echo "MaxSessions 10" | sudo tee -a /etc/ssh/sshd_config
 
     echo "Remote Access security measures have been implemented."
 }
