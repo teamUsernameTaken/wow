@@ -31,6 +31,7 @@ generate_string() {
         if ((attempt >= max_attempts)); then
             echo -e "${RED}Failed to generate matching string after $max_attempts attempts${NC}"
             return 1
+        fi
     done
     
     echo -e "${GREEN}Generated string:${NC} $result"
