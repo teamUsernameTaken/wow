@@ -12,7 +12,7 @@ generate_string() {
     if ! echo "test" | grep -E "$pattern" >/dev/null 2>&1; then
         echo -e "${RED}Invalid regex pattern${NC}"
         return 1
-    }
+    fi
 
     # Generate random string that matches pattern
     local chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
