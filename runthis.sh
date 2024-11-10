@@ -364,25 +364,65 @@ commencement() {
 installConfigureOSSEC() {
     echo "Installing and configuring OSSEC..."
     
+    # Install prerequisites
+    sudo apt-get install build-essential make gcc libevent-dev zlib1g-dev libssl-dev libpcre2-dev -y
+    
     # Download and install OSSEC
     local ossec_version="3.6.0"
     wget "https://github.com/ossec/ossec-hids/archive/${ossec_version}.tar.gz"
     tar -zxvf "${ossec_version}.tar.gz"
     cd "ossec-hids-${ossec_version}" || exit
-    sudo ./install.sh
+    
+    # Create an auto-answer file for unattended installation
+    cat > auto-install.conf << EOF
+OSSEC_LANGUAGE="en"
+OSSEC_USER="ossec"
+OSSEC_USER_MAIL="root@localhost"
+OSSEC_USER_ENABLE="y"
+OSSEC_UPDATE="y"
+OSSEC_SYSCHECK="y"
+OSSEC_ROOTCHECK="y"
+OSSEC_ACTIVE_RESPONSE="y"
+OSSEC_MAIL_REPORT="n"
+OSSEC_INSTALL_TYPE="local"
+EOF
+    
+    # Run installation with auto-answer file
+    sudo ./install.sh auto-install.conf
     
     # Configure OSSEC
     sudo tee -a /var/ossec/etc/ossec.conf > /dev/null <<EOT
-<localfile>
-  <log_format>syslog</log_format>
-  <location>/var/log/auth.log</location>
-</localfile>
+<ossec_config>
+  <syscheck>
+    <frequency>7200</frequency>
+    <directories check_all="yes">/etc,/usr/bin,/usr/sbin</directories>
+    <directories check_all="yes">/bin,/sbin</directories>
+  </syscheck>
+
+  <rootcheck>
+    <frequency>7200</frequency>
+  </rootcheck>
+
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+</ossec_config>
 EOT
     
-    # Restart OSSEC
-    sudo /var/ossec/bin/ossec-control restart
+    # Start OSSEC
+    sudo /var/ossec/bin/ossec-control start
+    
+    # Enable OSSEC to start on boot
+    sudo systemctl enable ossec
     
     echo "OSSEC installation and configuration completed."
+    echo "You can check OSSEC status with: sudo /var/ossec/bin/ossec-control status"
 }
 
 secureRemoteAccess() {
@@ -425,6 +465,47 @@ EOT
     echo "Remote Access security measures have been implemented."
 }
 
+systemCleanup() {
+    local PS3="Select cleanup option: "
+    local options=(
+        "Remove Unused Packages"
+        "Remove Malware/Botnets"
+        "Back"
+    )
+
+    select opt in "${options[@]}"
+    do
+        case $opt in
+            "Remove Unused Packages")
+                echo "Removing unused packages and cleaning apt cache..."
+                sudo apt autoremove -y
+                sudo apt clean
+                echo "System cleanup completed!"
+                break
+                ;;
+            "Remove Malware/Botnets")
+                echo "Enter package/application name to remove: "
+                read -r package_name
+                if [ -n "$package_name" ]; then
+                    echo "Removing $package_name..."
+                    sudo apt remove -y "$package_name"
+                    sudo apt-get remove -y "$package_name"
+                    echo "Removal completed!"
+                else
+                    echo "No package name provided!"
+                fi
+                break
+                ;;
+            "Back")
+                break
+                ;;
+            *) 
+                echo "Invalid option $REPLY"
+                ;;
+        esac
+    done
+}
+
 selectionScreen(){
     PS3="Select item please: "
 
@@ -437,6 +518,7 @@ selectionScreen(){
         "Run Background Tasks"
         "Setup Encrypted Directory"
         "Install and Configure OSSEC"
+        "System Cleanup"
     )
 
     while true; do
@@ -451,6 +533,7 @@ selectionScreen(){
                 6) runinBG; break;;
                 7) setupEncryptedDirectory; break;;
                 8) installConfigureOSSEC; break;;
+                9) systemCleanup; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Unknown choice $REPLY"; break;
             esac
