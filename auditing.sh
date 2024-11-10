@@ -89,15 +89,6 @@ check_broken_packages() {
     echo "Look for: Any packages listed as broken, which may need repair or reinstallation"
 }
 
-install_auditd() {
-    echo "Installing AuditD:"
-    if ! sudo apt install auditd -y; then
-        echo "Error: Unable to install AuditD"
-        return 1
-    fi
-    echo "AuditD installed successfully"
-}
-
 add_audit_rules() {
     echo "Adding Audit Rules:"
     local rules_file="/etc/audit/rules.d/audit.rules"
@@ -159,7 +150,6 @@ monitor_ports_and_services() {
 }
 
 run_all_checks() {
-    install_auditd
     add_audit_rules
     check_apparmor
     start_enable_auditd
@@ -181,15 +171,15 @@ run_all_checks() {
 show_menu() {
     cat << EOF
 Diagnostic Logging Menu:
-1) Install AuditD              10) View all audit logs for today
-2) Add Audit Rules             11) Setup shadow file monitoring
-3) Check AppArmor status       12) Check failed login attempts
-4) Start and enable auditd     13) Find large PNG files
-5) Check AVC messages          14) Find recent PNG files
-6) Check system calls          15) Check for broken packages
-7) Check file access logs      16) Find world-writable files
-8) Check user account changes  17) Monitor ports and services
-9) Check executed commands     18) Run all checks
+1) Add Audit Rules             9) View all audit logs for today
+2) Check AppArmor status       10) Setup shadow file monitoring
+3) Start and enable auditd     11) Check failed login attempts
+4) Check AVC messages          12) Find large PNG files
+5) Check system calls          13) Find recent PNG files
+6) Check file access logs      14) Check for broken packages
+7) Check user account changes  15) Find world-writable files
+8) Check executed commands     16) Monitor ports and services
+                              17) Run all checks
 0) Exit
 Enter your choice: 
 EOF
@@ -204,9 +194,8 @@ main() {
         read -r choice
 
         case $choice in
-            [1-9]|1[0-8]) 
-                func_name=$(sed "${choice}q;d" <<< "install_auditd
-add_audit_rules
+            [1-9]|1[0-7]) 
+                func_name=$(sed "${choice}q;d" <<< "add_audit_rules
 check_apparmor
 start_enable_auditd
 check_avc_messages

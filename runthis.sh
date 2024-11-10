@@ -202,26 +202,6 @@ commencementInstallAll(){
     done
 }
 
- ##
- ## DYLAN, THERE IS AN ISSUE: cursor is telling me that the } at the bottom of clamscan is not matching with the one at the start of the function. Is yours working or is it ok? Lemme know, i commented it out for now. 
- ##
-# runinBG {
-#     clamscan(){
-#     apt update
-#     freshclam
-#     clamscan -r --infected --bell /
-#     clamscan -r /home /etc /tmp --move=/var/virusquarantine
-#     }
-
-#     rkhunter(){
-        
-#     }
-
-#     debsums(){
-#         sudo debsums -c
-#     }
-#     }
-
 commencementUnattendedUpgrades(){
     # Enable unatended upgrades
     echo "Updating and upgrading the system..."
