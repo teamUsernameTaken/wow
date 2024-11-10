@@ -14,9 +14,11 @@ generate_string() {
         return 1
     fi
 
-    # Generate random string that matches pattern
-    local chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    local length=20  # Default length
+    # For complex patterns, we'll use a more comprehensive character set
+    local chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/ '
+    local length=50  # Increased default length for complex patterns
+    local max_attempts=1000
+    local attempt=0
     local result=""
     
     while ! echo "$result" | grep -E "^$pattern$" >/dev/null 2>&1; do
@@ -24,6 +26,11 @@ generate_string() {
         for ((i=0; i<length; i++)); do
             result+="${chars:RANDOM%${#chars}:1}"
         done
+        
+        ((attempt++))
+        if ((attempt >= max_attempts)); then
+            echo -e "${RED}Failed to generate matching string after $max_attempts attempts${NC}"
+            return 1
     done
     
     echo -e "${GREEN}Generated string:${NC} $result"
