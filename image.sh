@@ -79,6 +79,64 @@ enhance_image() {
     echo "- enhanced_complete_$image (Complete enhancement)"
 }
 
+# New function to analyze hex patterns
+analyze_hex_patterns() {
+    local image=$1
+    local temp_hex="temp_hex_dump.txt"
+    local output_file="suspicious_patterns.txt"
+    
+    echo "Analyzing hex patterns for suspicious sequences..."
+    
+    # Create hex dump
+    xxd "$image" > "$temp_hex"
+    
+    # Initialize output file
+    echo "=== Suspicious Pattern Analysis ===" > "$output_file"
+    date >> "$output_file"
+    echo "Analyzing: $image" >> "$output_file"
+    echo "=================================" >> "$output_file"
+    
+    # Look for common patterns
+    echo -e "\nRepeated sequences (42 42 42):" >> "$output_file"
+    grep -n "42 42 42" "$temp_hex" >> "$output_file"
+    
+    echo -e "\nPossible file signatures:" >> "$output_file"
+    grep -n "FF D8" "$temp_hex" >> "$output_file"  # JPEG
+    grep -n "89 50 4E 47" "$temp_hex" >> "$output_file"  # PNG
+    grep -n "47 49 46 38" "$temp_hex" >> "$output_file"  # GIF
+    
+    # Look for repeated byte sequences
+    echo -e "\nRepeated byte sequences:" >> "$output_file"
+    for pattern in "00 00 00 00" "FF FF FF FF" "AA AA AA AA" "55 55 55 55"; do
+        echo "Checking pattern: $pattern" >> "$output_file"
+        grep -n "$pattern" "$temp_hex" >> "$output_file"
+    done
+    
+    # Look for potential ASCII text in hex
+    echo -e "\nPotential ASCII text sequences:" >> "$output_file"
+    strings "$temp_hex" | grep -i "secret\|pass\|key\|flag\|hidden" >> "$output_file"
+    
+    # Extract sections around suspicious patterns
+    echo -e "\nExtracted contexts around suspicious patterns:" >> "$output_file"
+    while IFS=: read -r line_num content; do
+        if [[ $content =~ (42.*42.*42|FF.*D8|89.*50.*4E.*47) ]]; then
+            echo -e "\nSuspicious pattern at line $line_num:" >> "$output_file"
+            # Extract 5 lines before and after the pattern
+            sed -n "$((line_num-5)),$((line_num+5))p" "$temp_hex" >> "$output_file"
+        fi
+    done < "$temp_hex"
+    
+    # Cleanup
+    rm "$temp_hex"
+    
+    echo "Analysis complete. Results saved to $output_file"
+    echo "Would you like to view the results now? (y/n)"
+    read view_results
+    if [ "$view_results" = "y" ]; then
+        less "$output_file"
+    fi
+}
+
 # Modified menu display function
 show_menu() {
     clear
@@ -160,8 +218,27 @@ while true; do
                 fi
                 ;;
             6)
+                echo "Examining hex patterns..."
                 if command -v hexedit >/dev/null 2>&1; then
-                    hexedit "$image"
+                    echo "1. Open in hex editor"
+                    echo "2. Analyze suspicious patterns"
+                    echo "3. Both"
+                    read -p "Choose an option (1-3): " hex_choice
+                    case $hex_choice in
+                        1)
+                            hexedit "$image"
+                            ;;
+                        2)
+                            analyze_hex_patterns "$image"
+                            ;;
+                        3)
+                            analyze_hex_patterns "$image"
+                            hexedit "$image"
+                            ;;
+                        *)
+                            echo "Invalid choice"
+                            ;;
+                    esac
                 else
                     echo "Hexedit not installed. Would you like to install it? (y/n)"
                     read install
