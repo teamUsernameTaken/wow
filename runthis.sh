@@ -290,6 +290,11 @@ commencementConfigureJaill() {
 }
 
 commencementChangePermissions(){
+    # Remove immutable attribute if set
+    sudo chattr -i /etc/passwd
+    sudo chattr -i /etc/shadow
+    sudo chattr -i /etc/sudoers
+    
     sudo chmod 644 /etc/passwd
     sudo chmod 400 /etc/shadow
     sudo chmod 440 /etc/sudoers
