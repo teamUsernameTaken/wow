@@ -266,7 +266,7 @@ commencementInstallAll(){
     local packages=(
         acl logwatch fail2ban auditd exiftool libpam-pwquality clamav
         apparmor apparmor-utils ufw gufw unattended-upgrades whiptail
-        net-tools vsftpd vim rkhunter debsums
+        net-tools vsftpd vim rkhunter debsums exiftool
     )
 
     for package in "${packages[@]}"; do
