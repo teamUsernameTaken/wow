@@ -1,5 +1,58 @@
 #!/bin/bash
 
+# Function to install all required dependencies
+install_dependencies() {
+    echo "Checking and installing required dependencies..."
+    
+    # Check for package manager
+    if command -v apt >/dev/null 2>&1; then
+        PKG_MANAGER="apt"
+    elif command -v yum >/dev/null 2>&1; then
+        PKG_MANAGER="yum"
+    else
+        echo "Error: Neither apt nor yum package manager found"
+        exit 1
+    fi
+
+    # List of required packages
+    REQUIRED_PACKAGES=(
+        "imagemagick"    # For image manipulation
+        "exiftool"       # For metadata extraction
+        "ruby"           # For zsteg
+        "python3"        # For stegano
+        "python3-pip"    # For Python packages
+        "hexedit"        # For hex editing
+    )
+
+    # Check and install each package
+    for package in "${REQUIRED_PACKAGES[@]}"; do
+        if ! command -v "$package" >/dev/null 2>&1; then
+            echo "Installing $package..."
+            sudo $PKG_MANAGER install -y "$package"
+        fi
+    done
+
+    # Install Python packages
+    echo "Installing Python packages..."
+    pip3 install stegano
+
+    # Install Ruby gems
+    echo "Installing Ruby gems..."
+    if ! command -v zsteg >/dev/null 2>&1; then
+        sudo gem install zsteg
+    fi
+
+    # Check ImageMagick policy to ensure it can process PDF files
+    if [ -f "/etc/ImageMagick-6/policy.xml" ]; then
+        sudo sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml
+    fi
+
+    echo "All dependencies installed successfully!"
+}
+
+# Call the installation function at startup
+install_dependencies
+
 # ... existing dependency check function ...
 
 # New function for unpixelating/enhancing clarity
