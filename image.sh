@@ -50,93 +50,6 @@ install_dependencies() {
     echo "All dependencies installed successfully!"
 }
 
-# Call the installation function at startup
-install_dependencies
-
-# ... existing dependency check function ...
-
-# New function for unpixelating/enhancing clarity
-enhance_image() {
-    local image=$1
-    echo "Enhancing image clarity..."
-    
-    # Create enhanced versions with different algorithms
-    convert "$image" -adaptive-sharpen 0x2 "enhanced_sharp_$image"
-    convert "$image" -unsharp 0x5 "enhanced_unsharp_$image"
-    convert "$image" -scale 400% -scale 25% "enhanced_scale_$image"
-    
-    # Advanced enhancement using multiple passes
-    convert "$image" -modulate 100,150,100 \
-        -unsharp 0x5 \
-        -adaptive-sharpen 0x2 \
-        -contrast-stretch 0.15x0.05% \
-        "enhanced_complete_$image"
-    
-    echo "Created enhanced versions:"
-    echo "- enhanced_sharp_$image (Basic sharpening)"
-    echo "- enhanced_unsharp_$image (Unsharp mask)"
-    echo "- enhanced_scale_$image (Scale method)"
-    echo "- enhanced_complete_$image (Complete enhancement)"
-}
-
-# New function to analyze hex patterns
-analyze_hex_patterns() {
-    local image=$1
-    local temp_hex="temp_hex_dump.txt"
-    local output_file="suspicious_patterns.txt"
-    
-    echo "Analyzing hex patterns for suspicious sequences..."
-    
-    # Create hex dump
-    xxd "$image" > "$temp_hex"
-    
-    # Initialize output file
-    echo "=== Suspicious Pattern Analysis ===" > "$output_file"
-    date >> "$output_file"
-    echo "Analyzing: $image" >> "$output_file"
-    echo "=================================" >> "$output_file"
-    
-    # Look for common patterns
-    echo -e "\nRepeated sequences (42 42 42):" >> "$output_file"
-    grep -n "42 42 42" "$temp_hex" >> "$output_file"
-    
-    echo -e "\nPossible file signatures:" >> "$output_file"
-    grep -n "FF D8" "$temp_hex" >> "$output_file"  # JPEG
-    grep -n "89 50 4E 47" "$temp_hex" >> "$output_file"  # PNG
-    grep -n "47 49 46 38" "$temp_hex" >> "$output_file"  # GIF
-    
-    # Look for repeated byte sequences
-    echo -e "\nRepeated byte sequences:" >> "$output_file"
-    for pattern in "00 00 00 00" "FF FF FF FF" "AA AA AA AA" "55 55 55 55"; do
-        echo "Checking pattern: $pattern" >> "$output_file"
-        grep -n "$pattern" "$temp_hex" >> "$output_file"
-    done
-    
-    # Look for potential ASCII text in hex
-    echo -e "\nPotential ASCII text sequences:" >> "$output_file"
-    strings "$temp_hex" | grep -i "secret\|pass\|key\|flag\|hidden" >> "$output_file"
-    
-    # Extract sections around suspicious patterns
-    echo -e "\nExtracted contexts around suspicious patterns:" >> "$output_file"
-    while IFS=: read -r line_num content; do
-        if [[ $content =~ (42.*42.*42|FF.*D8|89.*50.*4E.*47) ]]; then
-            echo -e "\nSuspicious pattern at line $line_num:" >> "$output_file"
-            # Extract 5 lines before and after the pattern
-            sed -n "$((line_num-5)),$((line_num+5))p" "$temp_hex" >> "$output_file"
-        fi
-    done < "$temp_hex"
-    
-    # Cleanup
-    rm "$temp_hex"
-    
-    echo "Analysis complete. Results saved to $output_file"
-    echo "Would you like to view the results now? (y/n)"
-    read view_results
-    if [ "$view_results" = "y" ]; then
-        less "$output_file"
-    fi
-}
-
 # Modified menu display function
 show_menu() {
     clear
@@ -150,9 +63,28 @@ show_menu() {
     echo "6. Examine with Hex Editor"
     echo "7. Apply Image Filters"
     echo "8. Enhance Image Clarity"
-    echo "9. Exit"
+    echo "9. Install/Update Dependencies"
+    echo "10. Exit"
     echo "================================="
     echo "Example: '1 3 4' will run options 1, 3, and 4"
+}
+
+# Add this function before the main loop
+analyze_hex_patterns() {
+    local image="$1"
+    echo "Analyzing hex patterns in $image..."
+    
+    # Look for common file signatures and suspicious patterns
+    echo "Common file signatures:"
+    xxd -l 32 "$image"  # Show first 32 bytes
+    
+    echo -e "\nSearching for suspicious patterns..."
+    # Search for specific hex patterns (examples: PNG, JPEG, ZIP headers)
+    hexdump -C "$image" | grep -E "89 50 4e 47|ff d8 ff|50 4b 03 04" || echo "No common file headers found"
+    
+    # Count and display frequency of byte values
+    echo -e "\nByte frequency analysis (top 10 most common):"
+    xxd -p "$image" | tr -d '\n' | grep -o .. | sort | uniq -c | sort -rn | head -n 10
 }
 
 # Modified main logic to handle multiple selections
@@ -160,15 +92,12 @@ while true; do
     show_menu
     read -p "Enter your choices (space-separated numbers): " -a choices
     
-    # Exit if 9 is among the choices
-    if [[ " ${choices[@]} " =~ " 9 " ]]; then
+    # Exit if 10 is among the choices
+    if [[ " ${choices[@]} " =~ " 10 " ]]; then
         echo "Exiting..."
         exit 0
     fi
 
-    # Get image filename once for all operations
-    read -p "Enter image filename: " image
-    
     # Process each selected option
     for choice in "${choices[@]}"; do
         echo -e "\n=== Processing option $choice ==="
@@ -256,6 +185,9 @@ while true; do
                 ;;
             8)
                 enhance_image "$image"
+                ;;
+            9)
+                install_dependencies
                 ;;
             *)
                 echo "Invalid option: $choice"
