@@ -77,6 +77,78 @@ userCheck() {
             echo -e "  - $user"
         done
     fi
+
+  # Display management options
+  echo -e "\nUser Management Options:"
+  echo "1. Change user permissions (normal ↔ admin)"
+  echo "2. Remove user"
+  echo "3. Add user to group"
+  echo "4. Remove user from group"
+  echo "5. Exit"
+
+  read -p "Select an option (1-5): " choice
+
+  case $choice in
+    1)
+      read -p "Enter username to modify: " username
+      if id "$username" &>/dev/null; then
+        if groups "$username" | grep -qwE 'sudo|wheel'; then
+          # Remove from sudo group
+          sudo gpasswd -d "$username" sudo
+          echo "Removed admin privileges from $username"
+        else
+          # Add to sudo group
+          sudo usermod -aG sudo "$username"
+          echo "Granted admin privileges to $username"
+        fi
+      else
+        echo "User $username does not exist"
+      fi
+      ;;
+    2)
+      read -p "Enter username to remove: " username
+      if id "$username" &>/dev/null; then
+        sudo userdel -r "$username"
+        echo "Removed user $username"
+      else
+        echo "User $username does not exist"
+      fi
+      ;;
+    3)
+      read -p "Enter username: " username
+      read -p "Enter group name: " groupname
+      if id "$username" &>/dev/null; then
+        if getent group "$groupname" >/dev/null; then
+          sudo usermod -aG "$groupname" "$username"
+          echo "Added $username to group $groupname"
+        else
+          echo "Group $groupname does not exist"
+        fi
+      else
+        echo "User $username does not exist"
+      fi
+      ;;
+    4)
+      read -p "Enter username: " username
+      read -p "Enter group name: " groupname
+      if id "$username" &>/dev/null; then
+        if getent group "$groupname" >/dev/null; then
+          sudo gpasswd -d "$username" "$groupname"
+          echo "Removed $username from group $groupname"
+        else
+          echo "Group $groupname does not exist"
+        fi
+      else
+        echo "User $username does not exist"
+      fi
+      ;;
+    5)
+      echo "Exiting user management"
+      ;;
+    *)
+      echo "Invalid option"
+      ;;
+  esac
 }
 
 passwordChange(){
