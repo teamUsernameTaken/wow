@@ -1,7 +1,7 @@
 os="undeclared"
 
 commencementUbuntu(){
-  echo "Ubuntu stuff"
+  
 }
 
 commencementFedora(){
