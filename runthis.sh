@@ -27,7 +27,7 @@ userCheck() {
     if [[ ! -f "$inputFile" ]]; then
         echo "Error: Allowed users file '$inputFile' not found."
         exit 1
-    fi
+    fi{
 
   # Loop through all normal users
   for user in $systemUsers; do
@@ -152,7 +152,6 @@ userCheck() {
 }
 
 passwordChange(){
-
     # Get all users with UID >= 1000 (typical for regular users)
     local users
     local PASSWD_FILE="/etc/passwd"  # Add this line to define PASSWD_FILE
