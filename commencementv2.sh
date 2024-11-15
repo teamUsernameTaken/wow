@@ -102,7 +102,7 @@ commencementUbuntu(){
    sed -i '/password\s\+required\s\+pam_unix.so/a password required pam_pwquality.so retry=3' "$pamConfig"
   fi
 
-  sed -i 's/^password\s\+required\s\+pam_pwquality.so.*/password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3/' "$PAM_CONFIG"
+  sed -i 's/^password\s\+required\s\+pam_pwquality.so.*/password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3/' "$pamConfig"
 
   if ! grep -q "remember=5" "$pamConfig"; then
     sed -i '/pam_unix.so/s/$/ remember=5/' "$pamConfig"
