@@ -178,22 +178,6 @@ commencementUbuntu(){
   # Restart changed services
   systemctl restart fail2ban
   systemctl restart ssh
-
-    
-  # Print header
-  echo "List of all installed APT packages on your system:"
-  echo "--------------------------------------------------"
-  echo
-
-  # Use dpkg-query to list installed packages in a nice format
-  dpkg-query -l | awk 'BEGIN {OFS="\t"; print "Package Name", "Version", "Architecture", "Description"} 
-                        NR>5 {print $2, $3, $4, substr($0, index($0,$5))}' \
-      | less -S
-
-  # Explanation:
-  # dpkg-query -l lists all installed packages
-  # The `awk` command formats the output in columns (package name, version, architecture, description)
-  # The 'less -S' command allows scrolling horizontally and vertically (with horizontal scroll if needed)
 }
 
 commencementFedora(){
