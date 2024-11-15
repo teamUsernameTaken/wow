@@ -40,7 +40,7 @@ commencementUbuntu(){
       local sshdConfig="/etc/ssh/sshd_config"
       local param="$1"
       local value="$2"
-
+      
       # Check if the param already exists in the file
       if grep -q "^#*$param" "$sshdConfig"; then
         # Update the param
@@ -48,8 +48,9 @@ commencementUbuntu(){
       else
         # Add the param
         echo "$param $value" | tee -a "$sshdConfig" > /dev/null
+      fi
     }
-    
+
     cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 
     editSshdConfig "PermitRootLogin" "no"
@@ -124,7 +125,7 @@ detectOs(){
 }
 
 main(){
-    detectOs
+  detectOs
 }
 
 main
