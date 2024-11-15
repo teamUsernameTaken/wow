@@ -23,6 +23,9 @@ commencementUbuntu(){
   apt install apt-listchanges -y
   apt install bsd-mailx -y
   apt install ufw -y
+  apt install vim -y
+  apt install libpam-pwquality -y
+  apt install auditd logwatch fail2ban apparmor apparmor-utils whiptail -y
   
   # Enable unattended upgrades
   dpkg-reconfigure -plow unattended-upgrades
@@ -117,6 +120,49 @@ commencementUbuntu(){
   fi
 
   echo "Finnished making changes to pam!"
+
+  # Jail config
+  commencementConfigureJaill() {
+    # Copy the default jail.conf to jail.local if it doesn't already exist
+    if [ ! -f /etc/fail2ban/jail.local ]; then
+        cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+    fi
+
+    edit_fail2ban_ssh() {
+        # Check if the file exists
+        if [ ! -f /etc/fail2ban/jail.local ]; then
+            echo "Error: /etc/fail2ban/jail.local does not exist."
+            return 1
+        fi
+
+        # Use sed to edit the [ssh] section
+        sudo sed -i '/^\[ssh\]/,/^\[/ {
+            s/^enabled *=.*/enabled = true/
+            s/^port *=.*/port = ssh/
+            s/^filter *=.*/filter = sshd/
+            s/^logpath *=.*/logpath = \/var\/log\/auth.log/
+            s/^maxretry *=.*/maxretry = 3/
+            s/^bantime *=.*/bantime = 600/
+        }' /etc/fail2ban/jail.local
+
+        echo "The [ssh] section in /etc/fail2ban/jail.local has been updated."
+    }
+
+    # Run the function to edit the SSH section
+    edit_fail2ban_ssh
+  }
+
+
+  # Restart changed services
+  systemctl restart fail2ban
+  systemctl restart sshd
+
+  for pkg in $(apt-mark showmanual); do
+    # Check if the package is not marked as essential system package
+    if ! dpkg-query -W -f='${Essential}\n' "$pkg" | grep -q '^yes$'; then
+        echo "$pkg"
+    fi
+  done
 
 }
 
