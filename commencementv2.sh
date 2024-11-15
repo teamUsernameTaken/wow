@@ -96,16 +96,24 @@ commencementUbuntu(){
   pamConfig="/etc/pam.d/common-password"
   echo "Backing up common-password..."
   cp "$pamConfig" "$pamConfig.bak"
-  
-  if ! grep -q "pam_pwquality.so" "$pamConfig"; then
-   echo "Adding pam_pwquality.so into common-password"
-   sed -i '/password\s\+required\s\+pam_unix.so/a password required pam_pwquality.so retry=3' "$pamConfig"
+
+  # Check if pam_pwquality.so is already in the configuration file
+  if grep -q "pam_pwquality.so" "$pamConfig"; then
+      # If pam_pwquality.so is found, modify it
+      echo "Found pam_pwquality.so, updating its settings."
+      
+      # Update or add the necessary settings for pam_pwquality.so
+      sudo sed -i 's/^.*pam_pwquality.so.*/password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3/' "$pamConfig"
+  else
+      # If pam_pwquality.so is not found, add it as a new line with desired settings
+      echo "pam_pwquality.so not found, adding it to the configuration."
+      sudo sed -i '/password\s\+required\s\+pam_unix.so/a password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3' "$pamConfig"
   fi
 
-  sed -i 's/^password\s\+required\s\+pam_pwquality.so.*/password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3/' "$pamConfig"
-
+  # Check if pam_unix.so exists and add password history enforcement (e.g., remember=5)
   if ! grep -q "remember=5" "$pamConfig"; then
-    sed -i '/pam_unix.so/s/$/ remember=5/' "$pamConfig"
+      echo "Enforcing password history: remember=5"
+      sudo sed -i '/pam_unix.so/s/$/ remember=5/' "$pamConfig"
   fi
 
   echo "Finnished making changes to pam!"
