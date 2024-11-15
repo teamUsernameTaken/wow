@@ -73,7 +73,6 @@ commencementUbuntu(){
 
 
   # Ask to reboot now or later
-  notify-send "Commencement V2: Completed updates please confirm reboot"
   while true; do
     read -p "Reboot now to apply kernal updates? (y/n): " choice
     case "$choice" in
@@ -92,6 +91,25 @@ commencementUbuntu(){
         ;;
     esac
   done
+
+  # Password requirements
+  pamConfig="/etc/pam.d/common-password"
+  echo "Backing up common-password..."
+  cp "$pamConfig" "$pamConfig.bak"
+  
+  if ! grep -q "pam_pwquality.so" "$pamConfig"; then
+   echo "Adding pam_pwquality.so into common-password"
+   sed -i '/password\s\+required\s\+pam_unix.so/a password required pam_pwquality.so retry=3' "$PAM_CONFIG"
+  fi
+
+  sed -i 's/^password\s\+required\s\+pam_pwquality.so.*/password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3/' "$PAM_CONFIG"
+
+  if ! grep -q "remember=5" "$pamConfig"; then
+    sed -i '/pam_unix.so/s/$/ remember=5/' "$pamConfig"
+  fi
+
+  echo "Finnished making changes to pam!"
+
 }
 
 commencementFedora(){
@@ -107,6 +125,7 @@ detectOs(){
                 echo "detected os as ubuntu"
                 os="ubuntu"
                 commencementUbuntu
+                read -p "Completed! Press any key to continue..."
                 ;;
             "Fedora")
                 echo "detected os as fedora"
