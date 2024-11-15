@@ -154,6 +154,10 @@ detectOs(){
 }
 
 main(){
+  if [ $(id -u) -ne 0 ]; then
+    echo "Script needs to be run as root!"
+    exit 2
+  fi
   detectOs
 }
 
