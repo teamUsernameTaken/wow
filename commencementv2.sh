@@ -178,7 +178,13 @@ commencementUbuntu(){
   systemctl restart fail2ban
   systemctl restart ssh
 
-    
+  # This script needs to output to a temporary file first before piping to less
+  # to preserve the color formatting
+  TEMP_OUTPUT=$(mktemp)
+
+  # Ensure temp file is removed on script exit
+  trap "rm -f $TEMP_OUTPUT" EXIT
+
   # Set some color codes for better formatting
   RED='\033[0;31m'
   GREEN='\033[0;32m'
@@ -200,72 +206,81 @@ commencementUbuntu(){
       echo -e "${BLUE}───────────────────────────────────────────────────────────────────────────${NC}\n"
   }
 
-  # Get system information
-  print_header "SYSTEM INFORMATION"
-  echo -e "Hostname: $(hostname)"
-  echo -e "OS: $(lsb_release -d | cut -f2)"
-  echo -e "Kernel: $(uname -r)"
+  {
+      # Get system information
+      print_header "SYSTEM INFORMATION"
+      echo -e "Hostname: $(hostname)\n"
+      echo -e "OS: $(lsb_release -d | cut -f2)\n"
+      echo -e "Kernel: $(uname -r)\n"
 
-  # Get installed packages
-  print_header "INSTALLED PACKAGES"
-  print_subheader "Total number of installed packages: $(dpkg --get-selections | wc -l)"
-  dpkg-query -W -f='${Package}\t${Version}\t${Status}\n' | \
-      grep "install ok installed" | \
-      awk '{printf "%-40s %s\n", $1, $2}' | sort
+      # Get installed packages
+      print_header "INSTALLED PACKAGES"
+      print_subheader "Total number of installed packages: $(dpkg --get-selections | wc -l)"
+      dpkg-query -W -f='${Package}\t${Version}\t${Status}\n' | \
+          grep "install ok installed" | \
+          awk '{printf "%-40s %s\n\n", $1, $2}' | sort
 
-  # Get all cron jobs
-  print_header "CRON JOBS"
+      # Get all cron jobs
+      print_header "CRON JOBS"
 
-  # System-wide cron jobs
-  print_subheader "System-wide cron jobs (/etc/crontab)"
-  if [ -f /etc/crontab ]; then
-      cat /etc/crontab | grep -v '^#' | grep -v '^$'
-  else
-      echo "No system-wide cron jobs found."
-  fi
-
-  # System-wide cron directories
-  print_subheader "System-wide cron directories (/etc/cron.*)"
-  for CRONDIR in /etc/cron.d /etc/cron.daily /etc/cron.hourly /etc/cron.monthly /etc/cron.weekly; do
-      if [ -d "$CRONDIR" ]; then
-          echo -e "${GREEN}Contents of $CRONDIR:${NC}"
-          ls -l "$CRONDIR" | grep -v '^total'
-          echo
+      # System-wide cron jobs
+      print_subheader "System-wide cron jobs (/etc/crontab)"
+      if [ -f /etc/crontab ]; then
+          cat /etc/crontab | grep -v '^#' | grep -v '^$' | sed 's/$/\n/'
+      else
+          echo "No system-wide cron jobs found.\n"
       fi
-  done
 
-  # User crontabs
-  print_subheader "User crontabs"
-  for USER in $(cut -f1 -d: /etc/passwd); do
-      CRONTAB=$(crontab -u "$USER" -l 2>/dev/null)
-      if [ $? -eq 0 ]; then
-          echo -e "${GREEN}Crontab for user $USER:${NC}"
-          echo "$CRONTAB" | grep -v '^#' | grep -v '^$'
-          echo
-      fi
-  done
+      # System-wide cron directories
+      print_subheader "System-wide cron directories (/etc/cron.*)"
+      for CRONDIR in /etc/cron.d /etc/cron.daily /etc/cron.hourly /etc/cron.monthly /etc/cron.weekly; do
+          if [ -d "$CRONDIR" ]; then
+              echo -e "${GREEN}Contents of $CRONDIR:${NC}\n"
+              ls -l "$CRONDIR" | grep -v '^total' | sed 's/$/\n/'
+              echo
+          fi
+      done
 
-  # Get services
-  print_header "SERVICES"
+      # User crontabs
+      print_subheader "User crontabs"
+      for USER in $(cut -f1 -d: /etc/passwd); do
+          CRONTAB=$(crontab -u "$USER" -l 2>/dev/null)
+          if [ $? -eq 0 ]; then
+              echo -e "${GREEN}Crontab for user $USER:${NC}\n"
+              echo "$CRONTAB" | grep -v '^#' | grep -v '^$' | sed 's/$/\n/'
+              echo
+          fi
+      done
 
-  # Systemd services
-  print_subheader "Systemd Services Status"
-  systemctl list-units --type=service --all | \
-      grep -E '\.service' | \
-      awk '{printf "%-40s %-10s %s\n", $1, $3, $4}'
+      # Get services
+      print_header "SERVICES"
 
-  # Get running services
-  print_subheader "Running Services"
-  systemctl list-units --type=service --state=running | \
-      grep -E '\.service' | \
-      awk '{printf "%-40s %-10s %s\n", $1, $3, $4}'
+      # Systemd services
+      print_subheader "Systemd Services Status"
+      systemctl list-units --type=service --all | \
+          grep -E '\.service' | \
+          awk '{printf "%-40s %-10s %s\n\n", $1, $3, $4}'
 
-  # Get failed services
-  print_subheader "Failed Services"
-  systemctl list-units --type=service --state=failed | \
-      grep -E '\.service' | \
-      awk '{printf "%-40s %-10s %s\n", $1, $3, $4}' || \
-      echo "No failed services found."
+      # Get running services
+      print_subheader "Running Services"
+      systemctl list-units --type=service --state=running | \
+          grep -E '\.service' | \
+          awk '{printf "%-40s %-10s %s\n\n", $1, $3, $4}'
+
+      # Get failed services
+      print_subheader "Failed Services"
+      systemctl list-units --type=service --state=failed | \
+          grep -E '\.service' | \
+          awk '{printf "%-40s %-10s %s\n\n", $1, $3, $4}' || \
+          echo "No failed services found.\n"
+
+  } > "$TEMP_OUTPUT"
+
+  # Pipe the output to less with RAW control chars preserved (-R)
+  # and don't wrap long lines (-S)
+  less -RS "$TEMP_OUTPUT"
+
+
 }
 
 commencementFedora(){
