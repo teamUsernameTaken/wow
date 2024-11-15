@@ -25,6 +25,7 @@ commencementUbuntu(){
   apt install ufw -y
   apt install vim -y
   apt install libpam-pwquality -y
+  apt install less -y
   apt install auditd logwatch fail2ban apparmor apparmor-utils whiptail -y
   
   # Enable unattended upgrades
@@ -178,109 +179,21 @@ commencementUbuntu(){
   systemctl restart fail2ban
   systemctl restart ssh
 
-  # This script needs to output to a temporary file first before piping to less
-  # to preserve the color formatting
-  TEMP_OUTPUT=$(mktemp)
+    
+  # Print header
+  echo "List of all installed APT packages on your system:"
+  echo "--------------------------------------------------"
+  echo
 
-  # Ensure temp file is removed on script exit
-  trap "rm -f $TEMP_OUTPUT" EXIT
+  # Use dpkg-query to list installed packages in a nice format
+  dpkg-query -l | awk 'BEGIN {OFS="\t"; print "Package Name", "Version", "Architecture", "Description"} 
+                        NR>5 {print $2, $3, $4, substr($0, index($0,$5))}' \
+      | less -S
 
-  # Set some color codes for better formatting
-  RED='\033[0;31m'
-  GREEN='\033[0;32m'
-  BLUE='\033[0;34m'
-  YELLOW='\033[1;33m'
-  NC='\033[0m' # No Color
-
-  # Function to print section headers
-  print_header() {
-      echo -e "\n${RED}═══════════════════════════════════════════════════════════════════════════${NC}"
-      echo -e "${YELLOW}   $1${NC}"
-      echo -e "${RED}═══════════════════════════════════════════════════════════════════════════${NC}\n"
-  }
-
-  # Function to print subsection headers
-  print_subheader() {
-      echo -e "\n${BLUE}───────────────────────────────────────────────────────────────────────────${NC}"
-      echo -e "${GREEN}   $1${NC}"
-      echo -e "${BLUE}───────────────────────────────────────────────────────────────────────────${NC}\n"
-  }
-
-  {
-      # Get system information
-      print_header "SYSTEM INFORMATION"
-      echo -e "Hostname: $(hostname)\n"
-      echo -e "OS: $(lsb_release -d | cut -f2)\n"
-      echo -e "Kernel: $(uname -r)\n"
-
-      # Get installed packages
-      print_header "INSTALLED PACKAGES"
-      print_subheader "Total number of installed packages: $(dpkg --get-selections | wc -l)"
-      dpkg-query -W -f='${Package}\t${Version}\t${Status}\n' | \
-          grep "install ok installed" | \
-          awk '{printf "%-40s %s\n\n", $1, $2}' | sort
-
-      # Get all cron jobs
-      print_header "CRON JOBS"
-
-      # System-wide cron jobs
-      print_subheader "System-wide cron jobs (/etc/crontab)"
-      if [ -f /etc/crontab ]; then
-          cat /etc/crontab | grep -v '^#' | grep -v '^$' | sed 's/$/\n/'
-      else
-          echo "No system-wide cron jobs found.\n"
-      fi
-
-      # System-wide cron directories
-      print_subheader "System-wide cron directories (/etc/cron.*)"
-      for CRONDIR in /etc/cron.d /etc/cron.daily /etc/cron.hourly /etc/cron.monthly /etc/cron.weekly; do
-          if [ -d "$CRONDIR" ]; then
-              echo -e "${GREEN}Contents of $CRONDIR:${NC}\n"
-              ls -l "$CRONDIR" | grep -v '^total' | sed 's/$/\n/'
-              echo
-          fi
-      done
-
-      # User crontabs
-      print_subheader "User crontabs"
-      for USER in $(cut -f1 -d: /etc/passwd); do
-          CRONTAB=$(crontab -u "$USER" -l 2>/dev/null)
-          if [ $? -eq 0 ]; then
-              echo -e "${GREEN}Crontab for user $USER:${NC}\n"
-              echo "$CRONTAB" | grep -v '^#' | grep -v '^$' | sed 's/$/\n/'
-              echo
-          fi
-      done
-
-      # Get services
-      print_header "SERVICES"
-
-      # Systemd services
-      print_subheader "Systemd Services Status"
-      systemctl list-units --type=service --all | \
-          grep -E '\.service' | \
-          awk '{printf "%-40s %-10s %s\n\n", $1, $3, $4}'
-
-      # Get running services
-      print_subheader "Running Services"
-      systemctl list-units --type=service --state=running | \
-          grep -E '\.service' | \
-          awk '{printf "%-40s %-10s %s\n\n", $1, $3, $4}'
-
-      # Get failed services
-      print_subheader "Failed Services"
-      systemctl list-units --type=service --state=failed | \
-          grep -E '\.service' | \
-          awk '{printf "%-40s %-10s %s\n\n", $1, $3, $4}' || \
-          echo "No failed services found.\n"
-
-  } > "$TEMP_OUTPUT"
-
-  # Pipe the output to less with RAW control chars preserved (-R)
-  # and don't wrap long lines (-S)
-  less -RS "$TEMP_OUTPUT"
-
-
+  # Explanation:
+  # dpkg-query -l lists all installed packages
+  # The `awk` command formats the output in columns (package name, version, architecture, description)
+  # The 'less -S' command allows scrolling horizontally and vertically (with horizontal scroll if needed)
 }
 
 commencementFedora(){
