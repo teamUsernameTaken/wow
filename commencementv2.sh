@@ -1,7 +1,10 @@
 os="undeclared"
 
 commencementUbuntu(){
-  
+  echo "Please ensure the /etc/apt/sources.list file is correct"
+  read -p "Press Enter to continue"
+  apt update -y
+  apt upgrade -y
 }
 
 commencementFedora(){
