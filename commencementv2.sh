@@ -67,6 +67,8 @@ commencementUbuntu(){
     editSshdConfig "PermitTunnel" "no"
     editSshdConfig "DebianBanner" "no"
 
+    echo "Configured sshd!"
+
   fi
 
 
