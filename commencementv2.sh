@@ -122,48 +122,150 @@ commencementUbuntu(){
   echo "Finnished making changes to pam!"
 
   # Jail config
-  commencementConfigureJaill() {
-    # Copy the default jail.conf to jail.local if it doesn't already exist
-    if [ ! -f /etc/fail2ban/jail.local ]; then
-        cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-    fi
 
-    edit_fail2ban_ssh() {
-        # Check if the file exists
-        if [ ! -f /etc/fail2ban/jail.local ]; then
-            echo "Error: /etc/fail2ban/jail.local does not exist."
-            return 1
-        fi
+  # Copy the default jail.conf to jail.local if it doesn't already exist
+  if [ ! -f /etc/fail2ban/jail.local ]; then
+      cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+  fi
 
-        # Use sed to edit the [ssh] section
-        sudo sed -i '/^\[ssh\]/,/^\[/ {
-            s/^enabled *=.*/enabled = true/
-            s/^port *=.*/port = ssh/
-            s/^filter *=.*/filter = sshd/
-            s/^logpath *=.*/logpath = \/var\/log\/auth.log/
-            s/^maxretry *=.*/maxretry = 3/
-            s/^bantime *=.*/bantime = 600/
-        }' /etc/fail2ban/jail.local
+  # Check if the file exists
+  if [ ! -f /etc/fail2ban/jail.local ]; then
+      echo "Error: /etc/fail2ban/jail.local does not exist."
+      return 1
+  fi
 
-        echo "The [ssh] section in /etc/fail2ban/jail.local has been updated."
-    }
+  # Use sed to edit the [ssh] section
+  sudo sed -i '/^\[ssh\]/,/^\[/ {
+      s/^enabled *=.*/enabled = true/
+      s/^port *=.*/port = ssh/
+      s/^filter *=.*/filter = sshd/
+      s/^logpath *=.*/logpath = \/var\/log\/auth.log/
+      s/^maxretry *=.*/maxretry = 3/
+      s/^bantime *=.*/bantime = 600/
+  }' /etc/fail2ban/jail.local
 
-    # Run the function to edit the SSH section
-    edit_fail2ban_ssh
-  }
+  echo "The [ssh] section in /etc/fail2ban/jail.local has been updated."
 
+
+  # Change importiant file permissions
+
+  # Remove immutable attribute if set
+  sudo chattr -i /etc/passwd
+  sudo chattr -i /etc/shadow
+  sudo chattr -i /etc/sudoers
+  
+  sudo chmod 644 /etc/passwd
+  sudo chmod 400 /etc/shadow
+  sudo chmod 440 /etc/sudoers
+  
+  # Disable Root login
+  sudo passwd -l root
+
+  # Enable essential services
+  systemctl enable --now ssh
+  systemctl enable --now NetworkManager
+  systemctl enable --now rsyslog
+  systemctl enable --now systemd-journald
+  systemctl enable --now systemd-timesyncd
+  systemctl enable --now ntp
+  systemctl enable --now apparmor
+  systemctl enable --now cron
+  systemctl enable --now apt-daily.timer
+  systemctl enable --now apt-daily-upgrade.timer
+  systemctl enable --now unattended-upgrades
 
   # Restart changed services
   systemctl restart fail2ban
-  systemctl restart sshd
+  systemctl restart ssh
 
-  for pkg in $(apt-mark showmanual); do
-    # Check if the package is not marked as essential system package
-    if ! dpkg-query -W -f='${Essential}\n' "$pkg" | grep -q '^yes$'; then
-        echo "$pkg"
-    fi
+    
+  # Set some color codes for better formatting
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  BLUE='\033[0;34m'
+  YELLOW='\033[1;33m'
+  NC='\033[0m' # No Color
+
+  # Function to print section headers
+  print_header() {
+      echo -e "\n${RED}═══════════════════════════════════════════════════════════════════════════${NC}"
+      echo -e "${YELLOW}   $1${NC}"
+      echo -e "${RED}═══════════════════════════════════════════════════════════════════════════${NC}\n"
+  }
+
+  # Function to print subsection headers
+  print_subheader() {
+      echo -e "\n${BLUE}───────────────────────────────────────────────────────────────────────────${NC}"
+      echo -e "${GREEN}   $1${NC}"
+      echo -e "${BLUE}───────────────────────────────────────────────────────────────────────────${NC}\n"
+  }
+
+  # Get system information
+  print_header "SYSTEM INFORMATION"
+  echo -e "Hostname: $(hostname)"
+  echo -e "OS: $(lsb_release -d | cut -f2)"
+  echo -e "Kernel: $(uname -r)"
+
+  # Get installed packages
+  print_header "INSTALLED PACKAGES"
+  print_subheader "Total number of installed packages: $(dpkg --get-selections | wc -l)"
+  dpkg-query -W -f='${Package}\t${Version}\t${Status}\n' | \
+      grep "install ok installed" | \
+      awk '{printf "%-40s %s\n", $1, $2}' | sort
+
+  # Get all cron jobs
+  print_header "CRON JOBS"
+
+  # System-wide cron jobs
+  print_subheader "System-wide cron jobs (/etc/crontab)"
+  if [ -f /etc/crontab ]; then
+      cat /etc/crontab | grep -v '^#' | grep -v '^$'
+  else
+      echo "No system-wide cron jobs found."
+  fi
+
+  # System-wide cron directories
+  print_subheader "System-wide cron directories (/etc/cron.*)"
+  for CRONDIR in /etc/cron.d /etc/cron.daily /etc/cron.hourly /etc/cron.monthly /etc/cron.weekly; do
+      if [ -d "$CRONDIR" ]; then
+          echo -e "${GREEN}Contents of $CRONDIR:${NC}"
+          ls -l "$CRONDIR" | grep -v '^total'
+          echo
+      fi
   done
 
+  # User crontabs
+  print_subheader "User crontabs"
+  for USER in $(cut -f1 -d: /etc/passwd); do
+      CRONTAB=$(crontab -u "$USER" -l 2>/dev/null)
+      if [ $? -eq 0 ]; then
+          echo -e "${GREEN}Crontab for user $USER:${NC}"
+          echo "$CRONTAB" | grep -v '^#' | grep -v '^$'
+          echo
+      fi
+  done
+
+  # Get services
+  print_header "SERVICES"
+
+  # Systemd services
+  print_subheader "Systemd Services Status"
+  systemctl list-units --type=service --all | \
+      grep -E '\.service' | \
+      awk '{printf "%-40s %-10s %s\n", $1, $3, $4}'
+
+  # Get running services
+  print_subheader "Running Services"
+  systemctl list-units --type=service --state=running | \
+      grep -E '\.service' | \
+      awk '{printf "%-40s %-10s %s\n", $1, $3, $4}'
+
+  # Get failed services
+  print_subheader "Failed Services"
+  systemctl list-units --type=service --state=failed | \
+      grep -E '\.service' | \
+      awk '{printf "%-40s %-10s %s\n", $1, $3, $4}' || \
+      echo "No failed services found."
 }
 
 commencementFedora(){
