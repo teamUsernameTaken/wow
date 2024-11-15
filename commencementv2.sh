@@ -29,7 +29,7 @@ commencementUbuntu(){
 
   # Enable and configure ufw
   ufw enable
-  ufw default deny incomming
+  ufw default deny incoming
   ufw default allow outgoing
 
   # Check to see if sshd is installed
