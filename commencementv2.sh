@@ -99,7 +99,7 @@ commencementUbuntu(){
   
   if ! grep -q "pam_pwquality.so" "$pamConfig"; then
    echo "Adding pam_pwquality.so into common-password"
-   sed -i '/password\s\+required\s\+pam_unix.so/a password required pam_pwquality.so retry=3' "$PAM_CONFIG"
+   sed -i '/password\s\+required\s\+pam_unix.so/a password required pam_pwquality.so retry=3' "$pamConfig"
   fi
 
   sed -i 's/^password\s\+required\s\+pam_pwquality.so.*/password required pam_pwquality.so minlen=14 minclass=4 maxrepeat=3 maxsequence=3 enforce_for_root difok=4 retry=3/' "$PAM_CONFIG"
