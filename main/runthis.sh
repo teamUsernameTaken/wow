@@ -2,6 +2,8 @@
 
 PASSWORD="!@#123qweQWE"
 
+#----------------------------------#
+
 info(){
 echo -e "\n================\nTeam Number: 17-0197\nUID: WVV7-DSWG-7XYD\nDecryption Key:\n================\n"
 }
@@ -23,9 +25,7 @@ changeConfig() {
   fi
 }
 
-
-
-# actions
+#----------------------------------#
 
 passwordChange(){
     # Get all users with UID >= 1000 (typical for regular users)
@@ -137,6 +137,7 @@ systemCleanup() {
     done
 }
 
+#----------------------------------#
 scan() {
     echo "Starting system security scan..."
 
@@ -195,6 +196,7 @@ scan() {
     echo "All security scans completed!"
 }
 
+#----------------------------------#
 commencement() {
     echo 'Welcome to the commencement script!'
     showLogo() {
