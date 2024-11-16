@@ -64,6 +64,28 @@ remove_malware() {
     echo "Malware removal process completed."
 }
 
+# Function to configure password settings
+configure_passwd() {
+    echo "Configuring password and authentication settings..."
+    
+    # Check if passwdConfig.sh exists and is executable
+    if [ -f "./passwdConfig.sh" ]; then
+        # Source the file to get access to the function
+        source ./passwdConfig.sh
+        
+        # Run the password configuration function
+        if declare -F secure_passwd_config >/dev/null; then
+            secure_passwd_config
+        else
+            echo "Error: secure_passwd_config function not found in passwdConfig.sh"
+            return 1
+        fi
+    else
+        echo "Error: passwdConfig.sh not found in current directory"
+        return 1
+    fi
+}
+
 # Main menu
 while true; do
     echo ""
@@ -73,8 +95,9 @@ while true; do
     echo "3. Enable services/applications"
     echo "4. Disable services/applications"
     echo "5. Remove malware and unwanted software"
-    echo "6. Exit"
-    read -p "Enter your choice (1-6): " choice
+    echo "6. Configure Password Settings"
+    echo "7. Exit"
+    read -p "Enter your choice (1-7): " choice
 
     case $choice in
         1) disable_remove_services ;;
@@ -82,7 +105,8 @@ while true; do
         3) enable_services_apps ;;
         4) disable_services_apps ;;
         5) remove_malware ;;
-        6) echo "Exiting..."; exit 0 ;;
+        6) configure_passwd ;;
+        7) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
 done
