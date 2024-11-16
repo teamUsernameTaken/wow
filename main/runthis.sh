@@ -23,6 +23,8 @@ changeConfig() {
   fi
 }
 
+
+
 # actions
 
 passwordChange(){
@@ -227,6 +229,15 @@ runSourceList() {
     fi
 }
 
+closeOpenPorts() {
+    if [ -f "config/closeOpenPorts.sh" ]; then
+        sudo bash config/closeOpenPorts.sh
+    else
+        echo "Error: closeOpenPorts.sh not found in current directory"
+        exit 1
+    fi
+}
+
 selectionScreen(){
     PS3="Select item please: "
 
@@ -242,6 +253,7 @@ selectionScreen(){
         "Secure FTP"
         "Configure Remote Access"
         "Run Source List"
+        "Close Open Ports"
     )
 
     while true; do
@@ -259,6 +271,7 @@ selectionScreen(){
                 9) secureFTP; break;;
                 10) configureRemote; break;;
                 11) runSourceList; break;;
+                12) closeOpenPorts; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Unknown choice $REPLY"; break;
             esac

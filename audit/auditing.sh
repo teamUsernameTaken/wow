@@ -86,6 +86,16 @@ check_audit_details() {
             sudo ausearch -m USER_LOGIN -ts today --success no
             echo "Look for: Repeated failed login attempts from the same source"
             ;;
+        "package_integrity")
+            if ! sudo debsums -c; then
+                echo "Error: Some package files have been modified"
+            fi
+            echo "Look for: Modified or corrupted package files"
+            ;;
+        "directory_listing")
+            ls -la
+            echo "Look for: Hidden files and unusual permissions"
+            ;;
         *)
             echo "Invalid check type specified"
             return 1
@@ -104,7 +114,9 @@ check_audit_logs() {
         echo "6) Check executed commands"
         echo "7) View all audit logs"
         echo "8) Check failed login attempts"
-        echo "9) Run all audit checks"
+        echo "9) Check package integrity"
+        echo "10) Show directory listing"
+        echo "11) Run all audit checks"
         echo "0) Return to main menu"
         echo -n "Enter your choice: "
         read -r subchoice
@@ -118,9 +130,12 @@ check_audit_logs() {
             6) check_audit_details "executed_commands" ;;
             7) check_audit_details "all_logs" ;;
             8) check_audit_details "failed_logins" ;;
-            9)
+            9) check_audit_details "package_integrity" ;;
+            10) check_audit_details "directory_listing" ;;
+            11)
                 for check in "apparmor" "avc" "syscalls" "file_access" "user_changes" \
-                            "executed_commands" "all_logs" "failed_logins"; do
+                            "executed_commands" "all_logs" "failed_logins" "package_integrity" \
+                            "directory_listing"; do
                     check_audit_details "$check"
                 done
                 ;;
