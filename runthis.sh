@@ -324,10 +324,20 @@ secureRemoteAccess() {
 install usb-storage /bin/true
 EOT
     sudo update-initramfs -u
-    # # Configure SSH to use a non-standard port
-    # echo "Configuring SSH to use a non-standard port..."
-    # local new_ssh_port=2222
-    # sudo sed -i "s/^#Port 22/Port $new_ssh_port/" /etc/ssh/sshd_config
+
+    # Configure SSH with user-defined port
+    echo "Configuring SSH port..."
+    read -p "Enter desired SSH port number (1024-65535): " new_ssh_port
+
+    # Validate port number
+    if [[ "$new_ssh_port" =~ ^[0-9]+$ ]] && [ "$new_ssh_port" -ge 1024 ] && [ "$new_ssh_port" -le 65535 ]; then
+        sudo sed -i "s/^#Port 22/Port $new_ssh_port/" /etc/ssh/sshd_config
+        echo "SSH port has been changed to $new_ssh_port"
+        # Restart SSH service to apply changes
+        sudo systemctl restart sshd
+    else
+        echo "Invalid port number. Please enter a number between 1024 and 65535"
+    fi
 
     echo "Remote Access security measures have been implemented."
 }
