@@ -250,10 +250,10 @@ setupEncryptedDirectory() {
 }
 
 configureRemote() {
-    if [ -f "config/remote.sh" ]; then
-        sudo bash config/remote.sh
+    if [ -f "config/USB_disable.sh" ]; then
+        sudo bash config/USB_disable.sh
     else
-        echo "Error: remote.sh not found in config directory"
+        echo "Error: USB_disable.sh not found in config directory"
         exit 1
     fi
 }
@@ -290,7 +290,7 @@ selectionScreen(){
         "Install and Configure OSSEC"
         "System Cleanup"
         "Secure FTP"
-        "Configure Remote Access"
+        "Disable USB Ports"
         "Run Source List"
         "Close Open Ports"
     )
@@ -308,7 +308,7 @@ selectionScreen(){
                 7) installConfigureOSSEC; break;;
                 8) systemCleanup; break;;
                 9) secureFTP; break;;
-                10) configureRemote; break;;
+                10) USB_disable; break;;
                 11) runSourceList; break;;
                 12) closeOpenPorts; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
