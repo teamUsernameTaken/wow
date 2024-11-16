@@ -63,7 +63,7 @@ checkNetworkConnection() {
 commencementUbuntu(){
   # Check network connectivity before proceeding
   checkNetworkConnection || {
-    echo "Cannot proceed without network connectivity."
+    echo "Network connectivity check failed."
     read -p "Would you like to continue anyway? (y/N): " response
     if [[ ! $response =~ ^[Yy]$ ]]; then
       return 1
