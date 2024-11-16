@@ -1,491 +1,95 @@
-#!/usr/bin/bash
+configure_passwd_files() {
+    echo "Configuring /etc/passwd and related files security..."
 
-PASSWORD="!@#123qweQWE"
-
-info(){
-echo -e "\n================\nTeam Number: 17-0197\nUID: WVV7-DSWG-7XYD\nDecryption Key:\n================\n"
-}
-
-notify(){
-    echo "$1"
-    notify-send "$1"
-}
-
-userCheck() {
-  local NC='\033[0m'    # No Color
-  local RED='\033[0;31m'
-
-  local inputFile="allowedusers.txt"
-
-  local normalUsers=()
-  local adminUsers=()
-  local unauthorizedUsers=()
-
-  local systemUsers
-  systemUsers=$(awk -F':' '($3 >= 1000 && $3 < 60000) {print $1}' /etc/passwd)
-
-    if [[ ! -f "$inputFile" ]]; then
-        echo "Error: Allowed users file '$inputFile' not found."
-        exit 1
-    fi{
-
-  # Loop through all normal users
-  for user in $systemUsers; do
-    if grep -qw "^${user}$" "$inputFile"; then
-        # Determine if the user has admin privileges
-        if groups "$user" | grep -qwE 'sudo|wheel'; then
-            adminUsers+=("$user")
-        else
-            normalUsers+=("$user")
-        fi
-    else
-        # Flag unauthorized users with a warning
-        unauthorizedUsers+=("${RED}WARNING: USER: $user NOT IN allowedusers.txt${NC}")
-    fi
-  done
-
-  # Normal Users
-  echo -e "\nNormal Users:"
-    if [[ ${#normalUsers[@]} -eq 0 ]]; then
-        echo "  None"
-    else
-        for user in "${normalUsers[@]}"; do
-            echo "  - $user"
-        done
-    fi
-
-  # Admin Users
- echo "==============="
-
-    echo "Admin Users:"
-    if [[ ${#adminUsers[@]} -eq 0 ]]; then
-        echo "  None"
-    else
-        for user in "${adminUsers[@]}"; do
-            echo "  - $user"
-        done
-    fi
-
-  # Unauthorized Users
-    echo "==============="
-
-    echo "Unauthorized Users:"
-    if [[ ${#unauthorizedUsers[@]} -eq 0 ]]; then
-        echo "  None"
-    else
-        for user in "${unauthorizedUsers[@]}"; do
-            echo -e "  - $user"
-        done
-    fi
-
-  # Display management options
-  echo -e "\nUser Management Options:"
-  echo "1. Change user permissions (normal ↔ admin)"
-  echo "2. Remove user"
-  echo "3. Add user to group"
-  echo "4. Remove user from group"
-  echo "5. Exit"
-
-  read -p "Select an option (1-5): " choice
-
-  case $choice in
-    1)
-      read -p "Enter username to modify: " username
-      if id "$username" &>/dev/null; then
-        if groups "$username" | grep -qwE 'sudo|wheel'; then
-          # Remove from sudo group
-          sudo gpasswd -d "$username" sudo
-          echo "Removed admin privileges from $username"
-        else
-          # Add to sudo group
-          sudo usermod -aG sudo "$username"
-          echo "Granted admin privileges to $username"
-        fi
-      else
-        echo "User $username does not exist"
-      fi
-      ;;
-    2)
-      read -p "Enter username to remove: " username
-      if id "$username" &>/dev/null; then
-        sudo userdel -r "$username"
-        echo "Removed user $username"
-      else
-        echo "User $username does not exist"
-      fi
-      ;;
-    3)
-      read -p "Enter username: " username
-      read -p "Enter group name: " groupname
-      if id "$username" &>/dev/null; then
-        if getent group "$groupname" >/dev/null; then
-          sudo usermod -aG "$groupname" "$username"
-          echo "Added $username to group $groupname"
-        else
-          echo "Group $groupname does not exist"
-        fi
-      else
-        echo "User $username does not exist"
-      fi
-      ;;
-    4)
-      read -p "Enter username: " username
-      read -p "Enter group name: " groupname
-      if id "$username" &>/dev/null; then
-        if getent group "$groupname" >/dev/null; then
-          sudo gpasswd -d "$username" "$groupname"
-          echo "Removed $username from group $groupname"
-        else
-          echo "Group $groupname does not exist"
-        fi
-      else
-        echo "User $username does not exist"
-      fi
-      ;;
-    5)
-      echo "Exiting user management"
-      ;;
-    *)
-      echo "Invalid option"
-      ;;
-  esac
-}
-
-passwordChange(){
-    # Get all users with UID >= 1000 (typical for regular users)
-    local users
-    local PASSWD_FILE="/etc/passwd"  # Add this line to define PASSWD_FILE
-    users=$(awk -F: '$3 >= 1000 && $3 != 65534 {print $1}' "$PASSWD_FILE")
-
-    # Prepare the options for whiptail
-    local options=("ALL" "All Users" OFF)
+    # Backup critical files first
+    local timestamp=$(date +%Y%m%d-%H%M%S)
+    echo "Creating backups with timestamp: $timestamp"
     
-    while IFS= read -r user; do
-        options+=("$user" "" OFF)
-    done <<< "$users"
+    sudo cp /etc/passwd "/etc/passwd.backup-$timestamp"
+    sudo cp /etc/shadow "/etc/shadow.backup-$timestamp"
+    sudo cp /etc/group "/etc/group.backup-$timestamp"
+    sudo cp /etc/gshadow "/etc/gshadow.backup-$timestamp"
 
-    # Display the whiptail checklist
-    local selected_users
-        selected_users=$(whiptail --title "Password Change" \
-            --checklist "Select users to change passwords (use SPACE to select):" \
-            20 60 15 \
-            "${options[@]}" \
-            3>&1 1>&2 2>&3)
+    # Set correct permissions and ownership
+    echo "Setting secure permissions and ownership..."
+    
+    # /etc/passwd configuration
+    sudo chmod 644 /etc/passwd
+    sudo chown root:root /etc/passwd
+    
+    # /etc/shadow configuration
+    sudo chmod 600 /etc/shadow
+    sudo chown root:shadow /etc/shadow
+    
+    # /etc/group configuration
+    sudo chmod 644 /etc/group
+    sudo chown root:root /etc/group
+    
+    # /etc/gshadow configuration
+    sudo chmod 600 /etc/gshadow
+    sudo chown root:shadow /etc/gshadow
 
-    # Check if user canceled the operation
-    if [ $? -ne 0 ]; then
-      echo "Operation canceled by the user."
-      exit 1
-    fi  
+    # Verify passwd file format and permissions
+    echo "Performing security audit on passwd files..."
+    {
+        echo "=== Password Files Security Audit ==="
+        echo "Generated on: $(date)"
+        echo ""
 
-    # Remove quotes from the selected_users string
-    selected_users=$(echo "$selected_users" | tr -d '"')
+        echo "1. Checking /etc/passwd permissions:"
+        ls -l /etc/passwd
+        
+        echo -e "\n2. Checking /etc/shadow permissions:"
+        ls -l /etc/shadow
+        
+        echo -e "\n3. Checking for duplicate UIDs:"
+        awk -F: '{print $3}' /etc/passwd | sort -n | uniq -d
+        
+        echo -e "\n4. Checking for duplicate usernames:"
+        awk -F: '{print $1}' /etc/passwd | sort | uniq -d
+        
+        echo -e "\n5. Checking for duplicate GIDs:"
+        awk -F: '{print $3}' /etc/group | sort -n | uniq -d
+        
+        echo -e "\n6. Checking for users with UID 0 (should only be root):"
+        awk -F: '($3 == 0) {print $1}' /etc/passwd
+        
+        echo -e "\n7. Checking for empty passwords:"
+        sudo awk -F: '($2 == "") {print $1}' /etc/shadow
+        
+        echo -e "\n8. Checking for system accounts with login shells:"
+        awk -F: '($3 < 1000 && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $1}' /etc/passwd
 
-    # Check if "ALL" is selected
-     if [[ "$selected_users" == *"ALL"* ]]; then
-        selected_users="$users"
-    else
-        # Remove "ALL" from the selection if it's there but not all users are selected
-        selected_users=$(echo "$selected_users" | sed 's/ALL //')
-    fi
+    } | sudo tee /var/log/passwd_audit.log
 
-    # Check if there are users selected after processing
-   if [ -z "$selected_users" ]; then
-        echo "No users selected for password change."
-        exit 0
-    fi
+    # Fix common issues
+    echo "Fixing common security issues..."
 
-    # Change passwords for selected users
-    for user in $selected_users; do
-        echo "Changing password for $user"
-        echo "$user:$PASSWORD" | chpasswd
+    # Ensure root is the only UID 0 account
+    for user in $(awk -F: '($3 == 0 && $1 != "root") {print $1}' /etc/passwd); do
+        echo "WARNING: User $user has UID 0! Please investigate immediately!"
     done
 
-    echo "Password change operations completed."
-}
-
-changeConfig() {
-  local configFile="$1"
-  local setting="$2"
-  local value="$3"
-
-  if grep -q "^[#]*\s*$setting" "$configFile"; then
-    sed -i "s/^[#]*\s*$setting.*/$setting $value/" "$configFile"
-  else
-    echo "$setting $value" >> "$configFile"
-  fi
-}
-
-setupEncryptedDirectory() {
-    echo "Setting up encrypted directory..."
-    
-    # Install ecryptfs-utils
-    sudo apt install ecryptfs-utils -y
-    
-    # Create the directory to be encrypted
-    sudo mkdir -p /encrypted    
-    
-    # Mount the encrypted directory
-    sudo mount -t ecryptfs /encrypted /encrypted
-    
-    # The mount command will prompt for encryption options interactively
-    # After setup, inform the user
-    echo "Encrypted directory setup complete. It's mounted at /encrypted"
-    echo "Remember your passphrase and encryption details for future access!"
-}
-
-commencement() {
-    echo 'Welcome to the commencement script!'
-    showLogo() {
-    echo ".--.      .--.    ,-----.    .--.      .--. .---.  ";
-    echo "|  |_     |  |  .'  .-,  '.  |  |_     |  | \   /  ";
-    echo "| _( )_   |  | / ,-.|  \ _ \ | _( )_   |  | |   |  ";
-    echo "|(_ o _)  |  |;  \  '_ /  | :|(_ o _)  |  |  \ /   ";
-    echo "| (_,_) \ |  ||  _\`,/ \ _/  || (_,_) \ |  |   v    ";
-    echo "|  |/    \|  |: (  '\_/ \   ;|  |/    \|  |  _ _   ";
-    echo "|  '  /\  \`  | \ \`\"/  \  ) / |  '  /\  \`  | (_I_)  ";
-    echo "|    /  \    |  '. \_/\`\`\".'  |    /  \    |(_(=)_) ";
-    echo "\`---'    \`---\`    '-----'    \`---'    \`---\` (_I_)  ";
-    echo "                                                   ";
-}
-    sudo bash commencementv2.sh
-}
-
-installConfigureOSSEC() {
-    echo "Installing and configuring OSSEC..."
-    
-    # Install prerequisites
-    sudo apt-get install build-essential make gcc libevent-dev zlib1g-dev libssl-dev libpcre2-dev -y
-    
-    # Download and install OSSEC
-    local ossec_version="3.6.0"
-    wget "https://github.com/ossec/ossec-hids/archive/${ossec_version}.tar.gz"
-    tar -zxvf "${ossec_version}.tar.gz"
-    cd "ossec-hids-${ossec_version}" || exit
-    
-    # Create an auto-answer file for unattended installation
-    cat > auto-install.conf << EOF
-OSSEC_LANGUAGE="en"
-OSSEC_USER="ossec"
-OSSEC_USER_MAIL="root@localhost"
-OSSEC_USER_ENABLE="y"
-OSSEC_UPDATE="y"
-OSSEC_SYSCHECK="y"
-OSSEC_ROOTCHECK="y"
-OSSEC_ACTIVE_RESPONSE="y"
-OSSEC_MAIL_REPORT="n"
-OSSEC_INSTALL_TYPE="local"
-EOF
-    
-    # Run installation with auto-answer file
-    sudo ./install.sh auto-install.conf
-    
-    # Configure OSSEC
-    sudo tee -a /var/ossec/etc/ossec.conf > /dev/null <<EOT
-<ossec_config>
-  <syscheck>
-    <frequency>7200</frequency>
-    <directories check_all="yes">/etc,/usr/bin,/usr/sbin</directories>
-    <directories check_all="yes">/bin,/sbin</directories>
-  </syscheck>
-
-  <rootcheck>
-    <frequency>7200</frequency>
-  </rootcheck>
-
-  <localfile>
-    <log_format>syslog</log_format>
-    <location>/var/log/auth.log</location>
-  </localfile>
-
-  <localfile>
-    <log_format>syslog</log_format>
-    <location>/var/log/syslog</location>
-  </localfile>
-</ossec_config>
-EOT
-    
-    # Start OSSEC
-    sudo /var/ossec/bin/ossec-control start
-    
-    # Enable OSSEC to start on boot
-    sudo systemctl enable ossec
-    
-    echo "OSSEC installation and configuration completed."
-    echo "You can check OSSEC status with: sudo /var/ossec/bin/ossec-control status"
-}
-
-secureRemoteAccess() {
-    echo "Securing Remote Access..."
-
-    # Disable unused USB ports
-    echo "Disabling unused USB ports..."
-    sudo tee /etc/modprobe.d/disable-usb.conf > /dev/null <<EOT
-install usb-storage /bin/true
-EOT
-    sudo update-initramfs -u
-
-    # Configure SSH with user-defined port
-    echo "Configuring SSH port..."
-    read -p "Enter desired SSH port number (1024-65535): " new_ssh_port
-
-    # Validate port number
-    if [[ "$new_ssh_port" =~ ^[0-9]+$ ]] && [ "$new_ssh_port" -ge 1024 ] && [ "$new_ssh_port" -le 65535 ]; then
-        sudo sed -i "s/^#Port 22/Port $new_ssh_port/" /etc/ssh/sshd_config
-        echo "SSH port has been changed to $new_ssh_port"
-        # Restart SSH service to apply changes
-        sudo systemctl restart sshd
-    else
-        echo "Invalid port number. Please enter a number between 1024 and 65535"
-    fi
-
-    echo "Remote Access security measures have been implemented."
-}
-
-systemCleanup() {
-    local PS3="Select cleanup option: "
-    local options=(
-        "Remove Unused Packages"
-        "Remove Malware/Botnets"
-        "Back"
-    )
-
-    select opt in "${options[@]}"
-    do
-        case $opt in
-            "Remove Unused Packages")
-                echo "Removing unused packages and cleaning apt cache..."
-                sudo apt autoremove -y
-                sudo apt clean
-                echo "System cleanup completed!"
-                break
-                ;;
-            "Remove Malware/Botnets")
-                echo "Enter package/application name to remove: "
-                read -r package_name
-                if [ -n "$package_name" ]; then
-                    echo "Removing $package_name..."
-                    sudo apt remove -y "$package_name"
-                    sudo apt-get remove -y "$package_name"
-                    echo "Removal completed!"
-                else
-                    echo "No package name provided!"
-                fi
-                break
-                ;;
-            "Back")
-                break
-                ;;
-            *) 
-                echo "Invalid option $REPLY"
-                ;;
-        esac
+    # Ensure system accounts have nologin shell
+    for user in $(awk -F: '($3 < 1000 && $7 != "/usr/sbin/nologin" && $7 != "/bin/false" && $1 != "root") {print $1}' /etc/passwd); do
+        echo "Setting /usr/sbin/nologin shell for system user $user"
+        sudo usermod -s /usr/sbin/nologin "$user"
     done
-}
 
-secureFTP() {
-    echo "Securing FTP access..."
-    
-    # Install vsftpd if not present
-    sudo apt-get install vsftpd -y
-    
-    # Backup original config
-    sudo cp /etc/vsftpd.conf /etc/vsftpd.conf.bak
-    
-    # Configure secure settings
-    sudo tee /etc/vsftpd.conf > /dev/null <<EOT
-# Disable anonymous login
-anonymous_enable=NO
-
-# Enable local user login
-local_enable=YES
-
-# Enable write permissions for local users
-write_enable=YES
-
-# Chroot local users to their home directories
-chroot_local_user=YES
-allow_writeable_chroot=YES
-
-# Use SSL
-ssl_enable=YES
-rsa_cert_file=/etc/ssl/private/vsftpd.pem
-rsa_private_key_file=/etc/ssl/private/vsftpd.pem
-
-# Force SSL for both data and login
-force_local_data_ssl=YES
-force_local_logins_ssl=YES
-
-# Passive mode configuration
-pasv_enable=YES
-pasv_min_port=40000
-pasv_max_port=50000
-
-# Logging
-xferlog_enable=YES
-xferlog_std_format=YES
-xferlog_file=/var/log/vsftpd.log
-dual_log_enable=YES
-EOT
-
-    # Generate SSL certificate
-    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout /etc/ssl/private/vsftpd.pem \
-        -out /etc/ssl/private/vsftpd.pem \
-        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
-
-    # Restart vsftpd service
-    sudo systemctl restart vsftpd
-    
-    echo "FTP has been secured with SSL/TLS and strict access controls"
-}
-
-selectionScreen(){
-    PS3="Select item please: "
-
-    items=(
-        "Info" 
-        "Clamscan" 
-        "Commencement" 
-        "User Check" 
-        "Password Change" 
-        "Run Background Tasks"
-        "Setup Encrypted Directory"
-        "Install and Configure OSSEC"
-        "System Cleanup"
-        "Secure FTP"
-    )
-
-    while true; do
-        select item in "${items[@]}" Quit
-        do
-            case $REPLY in
-                1) info; break;;
-                2) clamscan; break;;
-                3) commencement; break;;
-                4) userCheck; break;;
-                5) passwordChange; break;;
-                6) runinBG; break;;
-                7) setupEncryptedDirectory; break;;
-                8) installConfigureOSSEC; break;;
-                9) systemCleanup; break;;
-                10) secureFTP; break;;
-                $((${#items[@]}+1))) echo "We're done!"; break 2;;
-                *) echo "Unknown choice $REPLY"; break;
-            esac
-        done
+    # Lock any account with empty password
+    for user in $(sudo awk -F: '($2 == "") {print $1}' /etc/shadow); do
+        echo "Locking account with empty password: $user"
+        sudo passwd -l "$user"
     done
+
+    echo "Password files configuration completed."
+    echo "Audit report saved to /var/log/passwd_audit.log"
+    echo ""
+    echo "Important actions taken:"
+    echo "1. Created backups of critical files"
+    echo "2. Set secure permissions and ownership"
+    echo "3. Performed security audit"
+    echo "4. Fixed common security issues"
+    echo ""
+    echo "Please review /var/log/passwd_audit.log for detailed findings"
 }
-
-menu() {
-    showLogo
-    selectionScreen
-}
-
-
-main() {
-    menu
-}
-
-main
-
