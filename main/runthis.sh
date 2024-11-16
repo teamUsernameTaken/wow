@@ -217,6 +217,16 @@ configureRemote() {
     fi
 }
 
+runSourceList() {
+    if [ -f "config/sourceslist.sh" ]; then
+        echo "Running sourcelist.sh..."
+        sudo bash config/sourceslist.sh
+    else
+        echo "Error: sourcelist.sh not found in current directory"
+        exit 1
+    fi
+}
+
 selectionScreen(){
     PS3="Select item please: "
 
@@ -231,6 +241,7 @@ selectionScreen(){
         "System Cleanup"
         "Secure FTP"
         "Configure Remote Access"
+        "Run Source List"
     )
 
     while true; do
@@ -247,6 +258,7 @@ selectionScreen(){
                 8) systemCleanup; break;;
                 9) secureFTP; break;;
                 10) configureRemote; break;;
+                11) runSourceList; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Unknown choice $REPLY"; break;
             esac
