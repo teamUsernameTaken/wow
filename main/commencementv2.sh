@@ -1,6 +1,75 @@
 os="undeclared"
 
+checkNetworkConnection() {
+    echo "Checking network connectivity..."
+    
+    # Try to ping Google's DNS server
+    if ! ping -c 1 8.8.8.8 &> /dev/null; then
+        echo "No network connectivity detected. Attempting fixes..."
+        
+        # Check NetworkManager.conf
+        local nm_conf="/etc/NetworkManager/NetworkManager.conf"
+        if [ -f "$nm_conf" ]; then
+            if grep -q "managed=false" "$nm_conf"; then
+                echo "Found managed=false in NetworkManager.conf, changing to managed=true"
+                sed -i 's/managed=false/managed=true/' "$nm_conf"
+                systemctl restart NetworkManager
+                sleep 5  # Give NetworkManager time to restart
+                
+                # Test connectivity again
+                if ping -c 1 8.8.8.8 &> /dev/null; then
+                    echo "Network connection restored!"
+                    return 0
+                fi
+            fi
+        fi
+        
+        # Additional network troubleshooting steps
+        echo "Performing additional network diagnostics..."
+        
+        # Check if NetworkManager service is running
+        if ! systemctl is-active NetworkManager &> /dev/null; then
+            echo "NetworkManager is not running. Starting it..."
+            systemctl start NetworkManager
+        fi
+        
+        # Check interface status
+        echo "Checking network interfaces..."
+        ip link show
+        
+        # Try to bring up all interfaces
+        for interface in $(ip -o link show | awk -F': ' '{print $2}'); do
+            if [[ $interface != "lo" ]]; then
+                echo "Attempting to bring up interface: $interface"
+                ip link set $interface up
+            fi
+        fi
+        
+        # Final connectivity check
+        if ! ping -c 1 8.8.8.8 &> /dev/null; then
+            echo "WARNING: Network connectivity issues persist. Please check:"
+            echo "1. Physical network connection"
+            echo "2. DHCP server availability"
+            echo "3. Network interface configuration"
+            echo "4. DNS settings"
+            return 1
+        fi
+    else
+        echo "Network connectivity confirmed."
+        return 0
+    fi
+}
+
 commencementUbuntu(){
+  # Check network connectivity before proceeding
+  checkNetworkConnection || {
+    echo "Cannot proceed without network connectivity."
+    read -p "Would you like to continue anyway? (y/N): " response
+    if [[ ! $response =~ ^[Yy]$ ]]; then
+      return 1
+    fi
+  }
+
   # Confirm with the user that the sources are correct
   echo "Please ensure the /etc/apt/sources.list file is correct"
   read -p "Press Enter to continue"
