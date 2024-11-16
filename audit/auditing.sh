@@ -1,94 +1,5 @@
 #!/bin/bash
 
-check_apparmor() {
-    echo "Checking AppArmor status:"
-    if ! sudo aa-status; then
-        echo "Error: Unable to check AppArmor status"
-    fi
-    echo "Look for: Enabled profiles and any reported errors"
-}
-
-start_enable_auditd() {
-    echo "Starting and enabling auditd:"
-    if ! sudo systemctl start auditd; then
-        echo "Error: Unable to start auditd"
-    fi
-    if ! sudo systemctl enable auditd; then
-        echo "Error: Unable to enable auditd"
-    fi
-}
-
-check_avc_messages() {
-    echo "Checking for AVC messages:"
-    sudo ausearch -m avc
-    sudo ausearch -m avc -ts today
-    echo "Look for: Denied operations and their contexts"
-}
-
-check_system_calls() {
-    echo "Checking system calls:"
-    sudo ausearch -m syscall -ts today
-    sudo ausearch -m syscall --key sensitive_files
-    echo "Look for: Unusual or unauthorized system calls"
-}
-
-check_file_access_logs() {
-    echo "Checking file access logs:"
-    sudo ausearch -f /etc/shadow -ts today
-    sudo ausearch -f /etc/passwd -ts today
-    echo "Look for: Unauthorized access attempts to sensitive files"
-}
-
-check_user_changes() {
-    echo "Checking user account and role changes:"
-    sudo ausearch -m USER_ACCT -ts today
-    sudo ausearch -m USER_ROLE_CHANGE -ts today
-    echo "Look for: Unexpected account creations or role modifications"
-}
-
-check_executed_commands() {
-    echo "Checking executed commands:"
-    sudo ausearch -m EXECVE -ts today
-    echo "Look for: Suspicious or unauthorized command executions"
-}
-
-view_all_audit_logs() {
-    echo "Viewing all audit logs for today:"
-    sudo ausearch -ts today | less
-    echo "Look for: Any patterns of suspicious activity"
-}
-
-setup_shadow_monitoring() {
-    echo "Setting up shadow file access monitoring:"
-    sudo auditctl -w /etc/shadow -p wa -k shadow_access
-    sudo ausearch -k shadow_access -ts today
-    echo "Look for: Any attempts to access or modify the shadow file"
-}
-
-check_failed_logins() {
-    echo "Checking failed login attempts:"
-    sudo ausearch -m USER_LOGIN -ts today --success no
-    echo "Look for: Repeated failed login attempts from the same source"
-}
-
-find_large_png_files() {
-    echo "Searching for large PNG files:"
-    sudo find / -type f -name "*.png" -size +5M
-    echo "Look for: Unexpectedly large image files that could contain hidden data"
-}
-
-find_recent_png_files() {
-    echo "Searching for recently modified PNG files:"
-    sudo find / -type f -name "*.png" -mtime -7
-    echo "Look for: Recently modified image files in unexpected locations"
-}
-
-check_broken_packages() {
-    echo "Checking for broken packages:"
-    sudo apt list --installed | grep -i "broken"
-    echo "Look for: Any packages listed as broken, which may need repair or reinstallation"
-}
-
 add_audit_rules() {
     echo "Adding Audit Rules:"
     local rules_file="/etc/audit/rules.d/audit.rules"
@@ -115,118 +26,135 @@ add_audit_rules() {
     echo "Audit rules added and AuditD restarted successfully"
 }
 
-find_world_writable_files() {
-    echo "Finding world-writable files:"
-    sudo find / -perm -2 ! -type l -ls
-    echo "Look for: Files with unexpected world-writable permissions"
-}
-
-monitor_ports_and_services() {
-    echo "Monitoring Ports and Services:"
-    echo "Open ports:"
-    sudo netstat -tuln
-    echo "Look for: Unexpected open ports"
-
-    echo -e "\nActive services:"
-    systemctl list-units --type=service --state=active
-    echo "Look for: Unauthorized or unexpected active services"
-
-    echo -e "\nWould you like to disable any services? (y/n)"
-    read -r response
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-        echo "Enter the name of the service you want to disable (or 'q' to quit):"
-        while true; do
-            read -r service_name
-            if [[ "$service_name" == "q" ]]; then
-                break
-            fi
-            echo "Disabling $service_name..."
-            sudo systemctl disable "$service_name"
-            sudo systemctl mask "$service_name.service"
-            echo "Service $service_name has been disabled and masked."
-            echo "Enter another service name to disable (or 'q' to quit):"
-        done
+start_enable_auditd() {
+    echo "Starting and enabling auditd:"
+    if ! sudo systemctl start auditd; then
+        echo "Error: Unable to start auditd"
+    fi
+    if ! sudo systemctl enable auditd; then
+        echo "Error: Unable to enable auditd"
     fi
 }
 
-check_ssh_authorized_keys() {
-    echo "Checking SSH authorized keys for all users:"
-    for X in $(cut -f6-d':' /etc/passwd |sort |uniq); do
-        if [ -s "${X}/.ssh/authorized_keys" ]; then
-            echo "### ${X}: "
-            cat "${X}/.ssh/authorized_keys"
-            echo ""
-        fi
-    done
-    echo "Look for: Unauthorized or unexpected SSH keys"
+setup_shadow_monitoring() {
+    echo "Setting up shadow file access monitoring:"
+    sudo auditctl -w /etc/shadow -p wa -k shadow_access
+    sudo ausearch -k shadow_access -ts today
+    echo "Look for: Any attempts to access or modify the shadow file"
 }
 
-run_all_checks() {
-    add_audit_rules
-    check_apparmor
-    start_enable_auditd
-    check_avc_messages
-    check_system_calls
-    check_file_access_logs
-    check_user_changes
-    check_executed_commands
-    view_all_audit_logs
-    setup_shadow_monitoring
-    check_failed_logins
-    find_large_png_files
-    find_recent_png_files
-    check_broken_packages
-    find_world_writable_files
-    monitor_ports_and_services
-    check_ssh_authorized_keys
+check_audit_details() {
+    local check_type="$1"
+    echo "Performing audit check: $check_type"
+    
+    case "$check_type" in
+        "apparmor")
+            if ! sudo aa-status; then
+                echo "Error: Unable to check AppArmor status"
+            fi
+            echo "Look for: Enabled profiles and any reported errors"
+            ;;
+        "avc")
+            sudo ausearch -m avc
+            sudo ausearch -m avc -ts today
+            echo "Look for: Denied operations and their contexts"
+            ;;
+        "syscalls")
+            sudo ausearch -m syscall -ts today
+            sudo ausearch -m syscall --key sensitive_files
+            echo "Look for: Unusual or unauthorized system calls"
+            ;;
+        "file_access")
+            sudo ausearch -f /etc/shadow -ts today
+            sudo ausearch -f /etc/passwd -ts today
+            echo "Look for: Unauthorized access attempts to sensitive files"
+            ;;
+        "user_changes")
+            sudo ausearch -m USER_ACCT -ts today
+            sudo ausearch -m USER_ROLE_CHANGE -ts today
+            echo "Look for: Unexpected account creations or role modifications"
+            ;;
+        "executed_commands")
+            sudo ausearch -m EXECVE -ts today
+            echo "Look for: Suspicious or unauthorized command executions"
+            ;;
+        "all_logs")
+            sudo ausearch -ts today | less
+            echo "Look for: Any patterns of suspicious activity"
+            ;;
+        "failed_logins")
+            sudo ausearch -m USER_LOGIN -ts today --success no
+            echo "Look for: Repeated failed login attempts from the same source"
+            ;;
+        *)
+            echo "Invalid check type specified"
+            return 1
+            ;;
+    esac
+}
+
+check_audit_logs() {
+    while true; do
+        echo -e "\nAudit Log Check Menu:"
+        echo "1) Check AppArmor status"
+        echo "2) Check AVC messages"
+        echo "3) Check system calls"
+        echo "4) Check file access logs"
+        echo "5) Check user account changes"
+        echo "6) Check executed commands"
+        echo "7) View all audit logs"
+        echo "8) Check failed login attempts"
+        echo "9) Run all audit checks"
+        echo "0) Return to main menu"
+        echo -n "Enter your choice: "
+        read -r subchoice
+
+        case $subchoice in
+            1) check_audit_details "apparmor" ;;
+            2) check_audit_details "avc" ;;
+            3) check_audit_details "syscalls" ;;
+            4) check_audit_details "file_access" ;;
+            5) check_audit_details "user_changes" ;;
+            6) check_audit_details "executed_commands" ;;
+            7) check_audit_details "all_logs" ;;
+            8) check_audit_details "failed_logins" ;;
+            9)
+                for check in "apparmor" "avc" "syscalls" "file_access" "user_changes" \
+                            "executed_commands" "all_logs" "failed_logins"; do
+                    check_audit_details "$check"
+                done
+                ;;
+            0) break ;;
+            *) echo "Invalid option. Please try again." ;;
+        esac
+
+        echo -e "\nPress Enter to continue..."
+        read -r
+    done
 }
 
 show_menu() {
     cat << EOF
-Diagnostic Logging Menu:
-1) Add Audit Rules             9) View all audit logs for today      17) Run all checks
-2) Check AppArmor status       10) Setup shadow file monitoring      18) Check SSH authorized keys
-3) Start and enable auditd     11) Check failed login attempts
-4) Check AVC messages          12) Find large PNG files
-5) Check system calls          13) Find recent PNG files
-6) Check file access logs      14) Check for broken packages
-7) Check user account changes  15) Find world-writable files
-8) Check executed commands     16) Monitor ports and services
+Audit and Security Menu:
+1) Add Audit Rules
+2) Setup Shadow Monitoring
+3) Check Audit Logs
+4) Start and Enable Auditd
 0) Exit
 Enter your choice: 
 EOF
 }
 
 main() {
-    local log_file="/tmp/diagnostic_log_$(date +%Y%m%d_%H%M%S).txt"
-    echo "Output will be saved to $log_file"
-
     while true; do
         show_menu
         read -r choice
 
         case $choice in
-            [1-9]|1[0-7]) 
-                func_name=$(sed "${choice}q;d" <<< "add_audit_rules
-check_apparmor
-start_enable_auditd
-check_avc_messages
-check_system_calls
-check_file_access_logs
-check_user_changes
-check_executed_commands
-view_all_audit_logs
-setup_shadow_monitoring
-check_failed_logins
-find_large_png_files
-find_recent_png_files
-check_broken_packages
-find_world_writable_files
-monitor_ports_and_services
-run_all_checks")
-                echo "Running: $func_name"
-                $func_name | tee -a "$log_file"
-                ;;
+            1) add_audit_rules ;;
+            2) setup_shadow_monitoring ;;
+            3) check_audit_logs ;;
+            4) start_enable_auditd ;;
             0) echo "Exiting..."; exit 0 ;;
             *) echo "Invalid option. Please try again." ;;
         esac
