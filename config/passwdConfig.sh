@@ -1,3 +1,5 @@
+#!/bin/bash
+
 secure_passwd_config() {
     echo "Starting comprehensive password and authentication security configuration..."
 
