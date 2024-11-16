@@ -137,23 +137,42 @@ systemCleanup() {
     done
 }
 
-clamscan() {
-    # Check if ClamAV is installed
+scan() {
+    echo "Starting system security scan..."
+
+    # ClamAV Section
     if ! command -v clamscan &> /dev/null; then
         echo "ClamAV is not installed. Installing now..."
         sudo apt-get update
         sudo apt-get install -y clamav
     fi
 
-    # Update virus definitions
-    echo "Updating virus definitions..."
+    # Update ClamAV virus definitions
+    echo "Updating ClamAV virus definitions..."
     sudo freshclam
 
-    # Run the scan
-    echo "Starting system scan..."
+    # Run ClamAV scan
+    echo "Starting ClamAV system scan..."
     sudo clamscan -r / --exclude-dir="^/sys|^/proc|^/dev" --move=/var/quarantine
-    
     notify "ClamAV scan completed"
+
+    # RKHunter Section
+    if ! command -v rkhunter &> /dev/null; then
+        echo "RKHunter is not installed. Installing now..."
+        sudo apt-get update
+        sudo apt-get install -y rkhunter
+    fi
+
+    # Update RKHunter definitions
+    echo "Updating RKHunter definitions..."
+    sudo rkhunter --update
+
+    # Run RKHunter scan
+    echo "Starting RKHunter system scan..."
+    sudo rkhunter --check --skip-keypress --report-warnings-only
+    notify "RKHunter scan completed"
+
+    echo "All security scans completed!"
 }
 
 commencement() {
@@ -243,7 +262,7 @@ selectionScreen(){
 
     items=(
         "Info" 
-        "Clamscan" 
+        "Security Scan" 
         "Commencement" 
         "User Check" 
         "Password Change" 
@@ -261,7 +280,7 @@ selectionScreen(){
         do
             case $REPLY in
                 1) info; break;;
-                2) clamscan; break;;
+                2) scan; break;;
                 3) commencement; break;;
                 4) userCheck; break;;
                 5) passwordChange; break;;
