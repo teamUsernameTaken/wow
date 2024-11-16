@@ -149,6 +149,18 @@ monitor_ports_and_services() {
     fi
 }
 
+check_ssh_authorized_keys() {
+    echo "Checking SSH authorized keys for all users:"
+    for X in $(cut -f6-d':' /etc/passwd |sort |uniq); do
+        if [ -s "${X}/.ssh/authorized_keys" ]; then
+            echo "### ${X}: "
+            cat "${X}/.ssh/authorized_keys"
+            echo ""
+        fi
+    done
+    echo "Look for: Unauthorized or unexpected SSH keys"
+}
+
 run_all_checks() {
     add_audit_rules
     check_apparmor
@@ -166,20 +178,20 @@ run_all_checks() {
     check_broken_packages
     find_world_writable_files
     monitor_ports_and_services
+    check_ssh_authorized_keys
 }
 
 show_menu() {
     cat << EOF
 Diagnostic Logging Menu:
-1) Add Audit Rules             9) View all audit logs for today
-2) Check AppArmor status       10) Setup shadow file monitoring
+1) Add Audit Rules             9) View all audit logs for today      17) Run all checks
+2) Check AppArmor status       10) Setup shadow file monitoring      18) Check SSH authorized keys
 3) Start and enable auditd     11) Check failed login attempts
 4) Check AVC messages          12) Find large PNG files
 5) Check system calls          13) Find recent PNG files
 6) Check file access logs      14) Check for broken packages
 7) Check user account changes  15) Find world-writable files
 8) Check executed commands     16) Monitor ports and services
-                              17) Run all checks
 0) Exit
 Enter your choice: 
 EOF
