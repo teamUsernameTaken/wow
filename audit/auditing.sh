@@ -96,6 +96,14 @@ check_audit_details() {
             ls -la
             echo "Look for: Hidden files and unusual permissions"
             ;;
+        "system_journal")
+            sudo journalctl -xe
+            echo "Look for: Recent system events and errors"
+            ;;
+        "active_services")
+            systemctl list-units --type=service --state=active
+            echo "Look for: Unexpected or unauthorized running services"
+            ;;
         *)
             echo "Invalid check type specified"
             return 1
@@ -116,7 +124,9 @@ check_audit_logs() {
         echo "8) Check failed login attempts"
         echo "9) Check package integrity"
         echo "10) Show directory listing"
-        echo "11) Run all audit checks"
+        echo "11) Check System Journal"
+        echo "12) List Active Services"
+        echo "13) Run all audit checks"
         echo "0) Return to main menu"
         echo -n "Enter your choice: "
         read -r subchoice
@@ -132,10 +142,12 @@ check_audit_logs() {
             8) check_audit_details "failed_logins" ;;
             9) check_audit_details "package_integrity" ;;
             10) check_audit_details "directory_listing" ;;
-            11)
+            11) check_audit_details "system_journal" ;;
+            12) check_audit_details "active_services" ;;
+            13)
                 for check in "apparmor" "avc" "syscalls" "file_access" "user_changes" \
                             "executed_commands" "all_logs" "failed_logins" "package_integrity" \
-                            "directory_listing"; do
+                            "directory_listing" "system_journal" "active_services"; do
                     check_audit_details "$check"
                 done
                 ;;
