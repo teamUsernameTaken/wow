@@ -104,6 +104,7 @@ commencementUbuntu(){
   ufw enable
   ufw default deny incoming
   ufw default allow outgoing
+  
 
   # Check to see if sshd is installed
   if command -v sshd &>/dev/null; then
