@@ -172,6 +172,26 @@ scan() {
     sudo rkhunter --check --skip-keypress --report-warnings-only
     notify "RKHunter scan completed"
 
+    # Lynis Section
+    if ! command -v lynis &> /dev/null; then
+        echo "Lynis is not installed. Installing now..."
+        sudo apt-get update
+        sudo apt-get install -y lynis
+    fi
+
+    # Run Lynis audit
+    echo "Starting Lynis system audit..."
+    sudo lynis audit system --quick
+    # For detailed report: sudo lynis audit system
+    notify "Lynis audit completed"
+
+    # View Lynis report
+    echo "Generating Lynis report..."
+    if [ -f "/var/log/lynis.log" ]; then
+        echo "Lynis log available at: /var/log/lynis.log"
+        echo "Lynis report available at: /var/log/lynis-report.dat"
+    fi
+
     echo "All security scans completed!"
 }
 
