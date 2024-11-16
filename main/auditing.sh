@@ -36,6 +36,15 @@ start_enable_auditd() {
     fi
 }
 
+audit_actions() {
+ if [ -f "audit/audit_actions.sh" ]; then
+    sudo bash audit/audit_actions.sh
+ else
+    echo "Error: audit_actions.sh not found in current directory"
+        exit 1
+    fi
+}
+
 setup_shadow_monitoring() {
     echo "Setting up shadow file access monitoring:"
     sudo auditctl -w /etc/shadow -p wa -k shadow_access
@@ -167,6 +176,7 @@ Audit and Security Menu:
 2) Setup Shadow Monitoring
 3) Check Audit Logs
 4) Start and Enable Auditd
+5) Audit Actions
 0) Exit
 Enter your choice: 
 EOF
@@ -182,6 +192,7 @@ main() {
             2) setup_shadow_monitoring ;;
             3) check_audit_logs ;;
             4) start_enable_auditd ;;
+            5) audit_actions ;;
             0) echo "Exiting..."; exit 0 ;;
             *) echo "Invalid option. Please try again." ;;
         esac
