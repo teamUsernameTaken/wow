@@ -58,8 +58,8 @@ remove_malware() {
     
     for malware in "${malware_list[@]}"; do
         echo "Searching for and removing $malware..."
-        sudo find / -name "*$malware*" -type f -delete
-        sudo find / -name "*$malware*" -type d -exec rm -rf {} +
+        sudo find / -name "*${malware}*" -type f -print0 | xargs -0 rm -f 2>/dev/null || true
+        sudo find / -name "*${malware}*" -type d -print0 | xargs -0 rm -rf 2>/dev/null || true
     done
     echo "Malware removal process completed."
 }
@@ -116,8 +116,12 @@ remove_security_concerns() {
             read -p "Do you want to remove $software? (y/n): " choice
             if [[ $choice =~ ^[Yy]$ ]]; then
                 echo "Removing $software..."
-                sudo apt-get remove --purge "$software"* -y
-                sudo apt-get autoremove -y
+                if ! sudo apt-get remove --purge "$software"* -y; then
+                    echo "Warning: Error removing $software"
+                fi
+                if ! sudo apt-get autoremove -y; then
+                    echo "Warning: Error during autoremove"
+                fi
                 echo "$software has been removed."
             fi
         fi

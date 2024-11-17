@@ -47,10 +47,10 @@ start_enable_auditd() {
 }
 
 audit_actions() {
- if [ -f "audit/audit_actions.sh" ]; then
-    sudo bash audit/audit_actions.sh
- else
-    echo "Error: audit_actions.sh not found in current directory"
+    if [ -f "audit/audit_actions.sh" ]; then
+        sudo bash audit/audit_actions.sh
+    else
+        echo "Error: audit_actions.sh not found in current directory"
         exit 1
     fi
 }
@@ -185,9 +185,9 @@ Audit and Security Menu:
 1) User Check
 2) Add Audit Rules
 3) Setup Shadow Monitoring
-3) Check Audit Logs
-4) Start and Enable Auditd
-5) Audit Actions
+4) Check Audit Logs
+5) Start and Enable Auditd
+6) Audit Actions
 0) Exit
 Enter your choice: 
 EOF

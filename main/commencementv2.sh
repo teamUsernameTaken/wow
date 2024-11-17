@@ -288,7 +288,7 @@ main(){
     echo "Script needs to be run as root!"
     exit 2
   fi
-  commencementUbuntu
+  detectOs
 }
 
 main

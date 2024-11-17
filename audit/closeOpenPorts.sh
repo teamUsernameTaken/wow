@@ -1,7 +1,7 @@
 #!/bin/bash
 
 closeOpenPorts() {
-echo "Checking open ports..."
+    echo "Checking open ports..."
     
     # Get list of open ports using ss command
     local open_ports=$(ss -antp 2>/dev/null | grep LISTEN | awk '{print $4}' | cut -d':' -f2 | sort -u)

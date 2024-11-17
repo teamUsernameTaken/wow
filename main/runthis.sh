@@ -26,20 +26,21 @@ changeConfig() {
 }
 
 #----------all primary scripts------------------------#
+showLogo() {
+    echo ".--.      .--.    ,-----.    .--.      .--. .---.  ";
+    echo "|  |_     |  |  .'  .-,  '.  |  |_     |  | \   /  ";
+    echo "| _( )_   |  | / ,-.|  \ _ \ | _( )_   |  | |   |  ";
+    echo "|(_ o _)  |  |;  \  '_ /  | :|(_ o _)  |  |  \ /   ";
+    echo "| (_,_) \ |  ||  _\`,/ \ _/  || (_,_) \ |  |   v    ";
+    echo "|  |/    \|  |: (  '\_/ \   ;|  |/    \|  |  _ _   ";
+    echo "|  '  /\  \`  | \ \`\"/  \  ) / |  '  /\  \`  | (_I_)  ";
+    echo "|    /  \    |  '. \_/\`\`\".'  |    /  \    |(_(=)_) ";
+    echo "\`---'    \`---\`    '-----'    \`---'    \`---\` (_I_)  ";
+    echo "                                                   ";
+}
+
 commencement() {
     echo 'Welcome to the commencement script!'
-    showLogo() {
-        echo ".--.      .--.    ,-----.    .--.      .--. .---.  ";
-        echo "|  |_     |  |  .'  .-,  '.  |  |_     |  | \   /  ";
-        echo "| _( )_   |  | / ,-.|  \ _ \ | _( )_   |  | |   |  ";
-        echo "|(_ o _)  |  |;  \  '_ /  | :|(_ o _)  |  |  \ /   ";
-        echo "| (_,_) \ |  ||  _\`,/ \ _/  || (_,_) \ |  |   v    ";
-        echo "|  |/    \|  |: (  '\_/ \   ;|  |/    \|  |  _ _   ";
-        echo "|  '  /\  \`  | \ \`\"/  \  ) / |  '  /\  \`  | (_I_)  ";
-        echo "|    /  \    |  '. \_/\`\`\".'  |    /  \    |(_(=)_) ";
-        echo "\`---'    \`---\`    '-----'    \`---'    \`---\` (_I_)  ";
-        echo "                                                   ";
-    }
     showLogo
     sudo bash commencementv2.sh
 }
@@ -75,8 +76,8 @@ passwordChange(){
 
     # Check if user canceled the operation
     if [ $? -ne 0 ]; then
-      echo "Operation canceled by the user."
-      exit 1
+        echo "Operation canceled by the user."  
+        exit 1
     fi  
 
     # Remove quotes from the selected_users string

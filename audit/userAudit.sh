@@ -16,7 +16,7 @@ userCheck() {
     if [[ ! -f "$inputFile" ]]; then
         echo "Error: Allowed users file '$inputFile' not found."
         exit 1
-    fi{
+    fi
 
   # Loop through all normal users
   for user in $systemUsers; do
