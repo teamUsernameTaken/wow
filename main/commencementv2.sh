@@ -261,11 +261,17 @@ commencementUbuntu(){
   sed -i 's/^PASS_MIN_LEN.*$/PASS_MIN_LEN 8/' "$logindefsConfig"
 
   # Configure account lockout in common-auth
-  authConfig="/etc/pam.d/common-auth"
-  cp "$authConfig" "$authConfig.bak"
-  
-  if ! grep -q "pam_tally2.so" "$authConfig"; then
-      sed -i '1i auth required pam_tally2.so deny=5 unlock_time=600' "$authConfig"
+  read -p "Would you like to configure account lockout (5 failed attempts = 10 minute lockout)? (y/N): " configure_lockout
+  if [[ $configure_lockout =~ ^[Yy]$ ]]; then
+    authConfig="/etc/pam.d/common-auth"
+    cp "$authConfig" "$authConfig.bak"
+    
+    if ! grep -q "pam_tally2.so" "$authConfig"; then
+        sed -i '1i auth required pam_tally2.so deny=5 unlock_time=600' "$authConfig"
+        echo "Account lockout configured."
+    fi
+  else
+    echo "Skipping account lockout configuration."
   fi
 
   # Configure home directory permissions
