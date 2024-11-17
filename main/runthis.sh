@@ -45,6 +45,12 @@ commencement() {
 
 #------------ACTIONS----------------------#
 
+remove_ssh_keys() {
+    echo "Removing SSH keys..."
+    rm -f ~/.ssh/id_rsa*
+    echo "SSH keys removed"
+}
+
 passwordChange(){
     # Get all users with UID >= 1000 (typical for regular users)
     local users
@@ -302,7 +308,7 @@ selectionScreen(){
     items=(
         "Info" 
         "Security Scan" 
-        "Commencement" 
+        "Commencement"
         "Password Change" 
         "System Cleanup"
         "Configuration Options"

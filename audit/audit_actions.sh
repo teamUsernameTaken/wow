@@ -162,6 +162,20 @@ manage_ftp_access() {
     fi
 }
 
+# Function to migrate files
+migrate_files() {
+    echo "Migrating files..."
+    read -p "Enter source directory: " source_dir
+    read -p "Enter destination directory: " dest_dir
+    
+    if [ -d "$source_dir" ] && [ -d "$dest_dir" ]; then
+        sudo rsync -av "$source_dir/" "$dest_dir/"
+        echo "Files migrated successfully from $source_dir to $dest_dir"
+    else
+        echo "Error: Invalid directories. Please check if both directories exist."
+    fi
+}
+
 # Main menu
 while true; do
     echo ""
@@ -173,8 +187,9 @@ while true; do
     echo "5. Remove malware and unwanted software"
     echo "6. Check and remove security concerns"
     echo "7. Manage FTP access"
-    echo "8. Exit"
-    read -p "Enter your choice (1-8): " choice
+    echo "8. Migrate files"
+    echo "9. Exit"
+    read -p "Enter your choice (1-9): " choice
 
     case $choice in
         1) disable_remove_services ;;
@@ -184,7 +199,8 @@ while true; do
         5) remove_malware ;;
         6) remove_security_concerns ;;
         7) manage_ftp_access ;;
-        8) echo "Exiting..."; exit 0 ;;
+        8) migrate_files ;;
+        9) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
 done

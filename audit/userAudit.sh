@@ -73,9 +73,10 @@ userCheck() {
   echo "2. Remove user"
   echo "3. Add user to group"
   echo "4. Remove user from group"
-  echo "5. Exit"
+  echo "5. Manage root access"
+  echo "6. Exit"
 
-  read -p "Select an option (1-5): " choice
+  read -p "Select an option (1-6): " choice
 
   case $choice in
     1)
@@ -132,6 +133,21 @@ userCheck() {
       fi
       ;;
     5)
+      read -p "Enter username: " username
+      read -p "Grant root access? (y/n): " grant
+      if id "$username" &>/dev/null; then
+        if [ "$grant" = "y" ]; then
+          sudo usermod -aG sudo "$username"
+          echo "Granted root access to $username"
+        else
+          sudo gpasswd -d "$username" sudo
+          echo "Removed root access from $username"
+        fi
+      else
+        echo "User $username does not exist"
+      fi
+      ;;
+    6)
       echo "Exiting user management"
       ;;
     *)
