@@ -233,6 +233,7 @@ config() {
         "Disable USB Ports"
         "Run Source List"
         "Close Open Ports"
+        "Configure Bind9"
         "Back"
     )
 
@@ -290,6 +291,15 @@ config() {
                     sudo bash config/closeOpenPorts.sh
                 else
                     echo "Error: closeOpenPorts.sh not found in current directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Configure Bind9")
+                if [ -f "config/bind9.sh" ]; then
+                    sudo bash config/bind9.sh
+                else
+                    echo "Error: bind9.sh not found in config directory"
                     exit 1
                 fi
                 break
