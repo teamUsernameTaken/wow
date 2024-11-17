@@ -147,6 +147,21 @@ remove_security_concerns() {
     echo "Security concern check completed."
 }
 
+# Function to manage FTP access
+manage_ftp_access() {
+    echo "Managing FTP access..."
+    read -p "Enter username: " username
+    read -p "Allow access? (y/n): " allow
+    
+    if [[ $allow =~ ^[Yy]$ ]]; then
+        sudo usermod -a -G ftp "$username"
+        echo "FTP access granted to $username"
+    else
+        sudo gpasswd -d "$username" ftp
+        echo "FTP access revoked from $username"
+    fi
+}
+
 # Main menu
 while true; do
     echo ""
@@ -157,8 +172,9 @@ while true; do
     echo "4. Disable services/applications"
     echo "5. Remove malware and unwanted software"
     echo "6. Check and remove security concerns"
-    echo "7. Exit"
-    read -p "Enter your choice (1-7): " choice
+    echo "7. Manage FTP access"
+    echo "8. Exit"
+    read -p "Enter your choice (1-8): " choice
 
     case $choice in
         1) disable_remove_services ;;
@@ -167,7 +183,8 @@ while true; do
         4) disable_services_apps ;;
         5) remove_malware ;;
         6) remove_security_concerns ;;
-        7) echo "Exiting..."; exit 0 ;;
+        7) manage_ftp_access ;;
+        8) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
 done

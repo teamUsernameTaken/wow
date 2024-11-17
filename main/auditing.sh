@@ -1,5 +1,15 @@
 #!/bin/bash
 
+
+userCheck() {
+    if [ -f "audit/userAudit.sh" ]; then
+        sudo bash audit/userAudit.sh
+    else
+        echo "Error: useraudit.sh not found in current directory"
+        exit 1
+    fi
+}
+
 add_audit_rules() {
     echo "Adding Audit Rules:"
     local rules_file="/etc/audit/rules.d/audit.rules"
@@ -172,8 +182,9 @@ check_audit_logs() {
 show_menu() {
     cat << EOF
 Audit and Security Menu:
-1) Add Audit Rules
-2) Setup Shadow Monitoring
+1) User Check
+2) Add Audit Rules
+3) Setup Shadow Monitoring
 3) Check Audit Logs
 4) Start and Enable Auditd
 5) Audit Actions
@@ -187,12 +198,13 @@ main() {
         show_menu
         read -r choice
 
-        case $choice in
-            1) add_audit_rules ;;
-            2) setup_shadow_monitoring ;;
-            3) check_audit_logs ;;
-            4) start_enable_auditd ;;
-            5) audit_actions ;;
+        case $choice in 
+            1) userCheck ;;
+            2) add_audit_rules ;;
+            3) setup_shadow_monitoring ;;
+            4) check_audit_logs ;;
+            5) start_enable_auditd ;;
+            6) audit_actions ;;
             0) echo "Exiting..."; exit 0 ;;
             *) echo "Invalid option. Please try again." ;;
         esac

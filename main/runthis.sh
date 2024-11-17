@@ -25,7 +25,25 @@ changeConfig() {
   fi
 }
 
-#----------------------------------#
+#----------all primary scripts------------------------#
+commencement() {
+    echo 'Welcome to the commencement script!'
+    showLogo() {
+    echo ".--.      .--.    ,-----.    .--.      .--. .---.  ";
+    echo "|  |_     |  |  .'  .-,  '.  |  |_     |  | \   /  ";
+    echo "| _( )_   |  | / ,-.|  \ _ \ | _( )_   |  | |   |  ";
+    echo "|(_ o _)  |  |;  \  '_ /  | :|(_ o _)  |  |  \ /   ";
+    echo "| (_,_) \ |  ||  _\`,/ \ _/  || (_,_) \ |  |   v    ";
+    echo "|  |/    \|  |: (  '\_/ \   ;|  |/    \|  |  _ _   ";
+    echo "|  '  /\  \`  | \ \`\"/  \  ) / |  '  /\  \`  | (_I_)  ";
+    echo "|    /  \    |  '. \_/\`\`\".'  |    /  \    |(_(=)_) ";
+    echo "\`---'    \`---\`    '-----'    \`---'    \`---\` (_I_)  ";
+    echo "                                                   ";
+}
+    sudo bash commencementv2.sh
+}
+
+#------------ACTIONS----------------------#
 
 passwordChange(){
     # Get all users with UID >= 1000 (typical for regular users)
@@ -137,7 +155,7 @@ systemCleanup() {
     done
 }
 
-#----------------------------------#
+#-------------AUDITING SCANS---------------------#
 scan() {
     echo "Starting system security scan..."
 
@@ -196,92 +214,87 @@ scan() {
     echo "All security scans completed!"
 }
 
-#----------------------------------#
-commencement() {
-    echo 'Welcome to the commencement script!'
-    showLogo() {
-    echo ".--.      .--.    ,-----.    .--.      .--. .---.  ";
-    echo "|  |_     |  |  .'  .-,  '.  |  |_     |  | \   /  ";
-    echo "| _( )_   |  | / ,-.|  \ _ \ | _( )_   |  | |   |  ";
-    echo "|(_ o _)  |  |;  \  '_ /  | :|(_ o _)  |  |  \ /   ";
-    echo "| (_,_) \ |  ||  _\`,/ \ _/  || (_,_) \ |  |   v    ";
-    echo "|  |/    \|  |: (  '\_/ \   ;|  |/    \|  |  _ _   ";
-    echo "|  '  /\  \`  | \ \`\"/  \  ) / |  '  /\  \`  | (_I_)  ";
-    echo "|    /  \    |  '. \_/\`\`\".'  |    /  \    |(_(=)_) ";
-    echo "\`---'    \`---\`    '-----'    \`---'    \`---\` (_I_)  ";
-    echo "                                                   ";
+#-------------CONFIGURATION OPTIONS---------------------#
+
+config() {
+    local PS3="Select configuration option: "
+    local options=(
+        "Secure FTP"
+        "Install/Configure OSSEC"
+        "Setup Encrypted Directory"
+        "Disable USB Ports"
+        "Run Source List"
+        "Close Open Ports"
+        "Back"
+    )
+
+    select opt in "${options[@]}"
+    do
+        case $opt in
+            "Secure FTP")
+                if [ -f "config/secureFTP.sh" ]; then
+                    sudo bash config/secureFTP.sh
+                else
+                    echo "Error: secureFTP.sh not found in current directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Install/Configure OSSEC")
+                if [ -f "config/OSSEC.sh" ]; then
+                    sudo bash config/OSSEC.sh
+                else
+                    echo "Error: OSSEC.sh not found in current directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Setup Encrypted Directory")
+                if [ -f "config/encryptedDirectory.sh" ]; then
+                    sudo bash config/encryptedDirectory.sh
+                else
+                    echo "Error: encryptedDirectory.sh not found in config directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Disable USB Ports")
+                if [ -f "config/USB_disable.sh" ]; then
+                    sudo bash config/USB_disable.sh
+                else
+                    echo "Error: USB_disable.sh not found in config directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Run Source List")
+                if [ -f "config/sourceslist.sh" ]; then
+                    echo "Running sourcelist.sh..."
+                    sudo bash config/sourceslist.sh
+                else
+                    echo "Error: sourcelist.sh not found in current directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Close Open Ports")
+                if [ -f "config/closeOpenPorts.sh" ]; then
+                    sudo bash config/closeOpenPorts.sh
+                else
+                    echo "Error: closeOpenPorts.sh not found in current directory"
+                    exit 1
+                fi
+                break
+                ;;
+            "Back")
+                break
+                ;;
+            *) 
+                echo "Invalid option $REPLY"
+                ;;
+        esac
+    done
 }
-    sudo bash commencementv2.sh
-}
-
-
-secureFTP() {
-    if [ -f "config/secureFTP.sh" ]; then
-        sudo bash config/secureFTP.sh
-    else
-        echo "Error: secureFTP.sh not found in current directory"
-        exit 1
-    fi
-}
-
-userCheck() {
-    if [ -f "audit/userAudit.sh" ]; then
-        sudo bash audit/userAudit.sh
-    else
-        echo "Error: useraudit.sh not found in current directory"
-        exit 1
-    fi
-}
-
-installConfigureOSSEC() {
-    if [ -f "config/OSSEC.sh" ]; then
-        sudo bash config/OSSEC.sh
-    else
-        echo "Error: OSSEC.sh not found in current directory"
-        exit 1
-    fi
-}
-
-setupEncryptedDirectory() {
-    if [ -f "config/encryptedDirectory.sh" ]; then
-        sudo bash config/encryptedDirectory.sh
-    else
-        echo "Error: encryptedDirectory.sh not found in config directory"
-        exit 1
-    fi
-}
-
-configureRemote() {
-    if [ -f "config/USB_disable.sh" ]; then
-        sudo bash config/USB_disable.sh
-    else
-        echo "Error: USB_disable.sh not found in config directory"
-        exit 1
-    fi
-}
-
-runSourceList() {
-    if [ -f "config/sourceslist.sh" ]; then
-        echo "Running sourcelist.sh..."
-        sudo bash config/sourceslist.sh
-    else
-        echo "Error: sourcelist.sh not found in current directory"
-        exit 1
-    fi
-}
-
-closeOpenPorts() {
-    if [ -f "config/closeOpenPorts.sh" ]; then
-        sudo bash config/closeOpenPorts.sh
-    else
-        echo "Error: closeOpenPorts.sh not found in current directory"
-        exit 1
-    fi
-}
-
-
-
-#----------------------------------#
 
 selectionScreen(){
     PS3="Select item please: "
@@ -290,15 +303,9 @@ selectionScreen(){
         "Info" 
         "Security Scan" 
         "Commencement" 
-        "User Check" 
         "Password Change" 
-        "Setup Encrypted Directory"
-        "Install and Configure OSSEC"
         "System Cleanup"
-        "Secure FTP"
-        "Disable USB Ports"
-        "Run Source List"
-        "Close Open Ports"
+        "Configuration Options"
     )
 
     while true; do
@@ -308,15 +315,9 @@ selectionScreen(){
                 1) info; break;;
                 2) scan; break;;
                 3) commencement; break;;
-                4) userCheck; break;;
-                5) passwordChange; break;;
-                6) setupEncryptedDirectory; break;;
-                7) installConfigureOSSEC; break;;
-                8) systemCleanup; break;;
-                9) secureFTP; break;;
-                10) USB_disable; break;;
-                11) runSourceList; break;;
-                12) closeOpenPorts; break;;
+                4) passwordChange; break;;
+                5) systemCleanup; break;;
+                6) config; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Unknown choice $REPLY"; break;
             esac

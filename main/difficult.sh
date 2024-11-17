@@ -55,38 +55,11 @@ migrate_files() {
 # Function to check bind9
 check_bind9() {
     echo "Checking bind9 status..."
-    echo -e "\n1. Checking basic bind9 status:"
     named-checkconf
     systemctl status bind9
-
-    echo -e "\n2. Checking zone transfer settings:"
-    if grep -q "allow-transfer { none; };" /etc/bind/named.conf* ; then
-        echo -e "${GREEN}Zone transfers are properly restricted${NC}"
-    else
-        echo -e "${RED}WARNING: Zone transfers might not be properly restricted${NC}"
-        echo "Consider adding 'allow-transfer { none; };' to your zone configurations"
-    fi
-
-    echo -e "\n3. Checking version disclosure:"
-    if grep -q "version none;" /etc/bind/named.conf* ; then
-        echo -e "${GREEN}Version disclosure is properly disabled${NC}"
-    else
-        echo -e "${RED}WARNING: BIND version might be disclosed${NC}"
-        echo "Consider adding 'version none;' to your options block"
-    fi
 }
 
-# Function to manage FTP access
-manage_ftp_access() {
-    echo "Managing FTP access..."
-    read -p "Enter username: " username
-    read -p "Allow access? (y/n): " allow
-    
-    if [ "$allow" = "y" ]; then
-        usermod -a -G ftp "$username"
-    else
-        gpasswd -d "$username" ftp
-    fi
+
 }
 
 # Function to manage root UID access
