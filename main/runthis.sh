@@ -297,7 +297,10 @@ config() {
                 ;;
             "Configure Bind9")
                 if [ -f "config/bind9.sh" ]; then
-                    sudo bash config/bind9.sh
+                    # Run in a subshell to prevent environment contamination
+                    (sudo bash config/bind9.sh)
+                    # Reset the terminal after execution
+                    reset
                 else
                     echo "Error: bind9.sh not found in config directory"
                     exit 1

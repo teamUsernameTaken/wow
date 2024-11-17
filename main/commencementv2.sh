@@ -248,6 +248,30 @@ commencementUbuntu(){
   # Restart changed services
   systemctl restart fail2ban
   systemctl restart ssh
+
+  # Configure login.defs settings
+  echo "Configuring login.defs security settings..."
+  logindefsConfig="/etc/login.defs"
+  cp "$logindefsConfig" "$logindefsConfig.bak"
+  
+  # Update or add password policy settings
+  sed -i 's/^PASS_MAX_DAYS.*$/PASS_MAX_DAYS 90/' "$logindefsConfig"
+  sed -i 's/^PASS_MIN_DAYS.*$/PASS_MIN_DAYS 7/' "$logindefsConfig"
+  sed -i 's/^PASS_WARN_AGE.*$/PASS_WARN_AGE 14/' "$logindefsConfig"
+  sed -i 's/^PASS_MIN_LEN.*$/PASS_MIN_LEN 8/' "$logindefsConfig"
+
+  # Configure account lockout in common-auth
+  authConfig="/etc/pam.d/common-auth"
+  cp "$authConfig" "$authConfig.bak"
+  
+  if ! grep -q "pam_tally2.so" "$authConfig"; then
+      sed -i '1i auth required pam_tally2.so deny=5 unlock_time=600' "$authConfig"
+  fi
+
+  # Configure home directory permissions
+  adduserConfig="/etc/adduser.conf"
+  cp "$adduserConfig" "$adduserConfig.bak"
+  sed -i 's/^DIR_MODE=.*$/DIR_MODE=0755/' "$adduserConfig"
 }
 
 commencementFedora(){
