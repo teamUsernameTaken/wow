@@ -1,6 +1,6 @@
 #!/bin/bash
 
-secureRemoteAccess() {
+USB_disable() {
     echo "Securing Remote Access..."
 
     # Disable unused USB ports
