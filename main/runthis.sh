@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+cd "$(dirname "$0")" || exit 1
+
 PASSWORD="!@#123qweQWE"
 
 #----------------------------------#
@@ -165,6 +167,8 @@ systemCleanup() {
 
 #-------------AUDITING SCANS---------------------#
 scan() {
+    sudo mkdir -p /var/quarantine
+    
     echo "Starting system security scan..."
 
     # ClamAV Section
@@ -351,8 +355,34 @@ menu() {
     selectionScreen
 }
 
+checkDependencies() {
+    local required_scripts=(
+        "config/secureFTP.sh"
+        "config/OSSEC.sh"
+        "config/encryptedDirectory.sh"
+        "config/USB_disable.sh"
+        "config/sourceslist.sh"
+        "config/closeOpenPorts.sh"
+        "config/bind9.sh"
+        "commencementv2.sh"
+    )
+
+    local missing_scripts=()
+    for script in "${required_scripts[@]}"; do
+        if [ ! -f "$script" ]; then
+            missing_scripts+=("$script")
+        fi
+    done
+
+    if [ ${#missing_scripts[@]} -ne 0 ]; then
+        echo "Error: The following required scripts are missing:"
+        printf '%s\n' "${missing_scripts[@]}"
+        exit 1
+    fi
+}
 
 main() {
+    checkDependencies
     menu
 }
 

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if script is run as root
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
+
 userCheck() {
   local NC='\033[0m'    # No Color
   local RED='\033[0;31m'
@@ -81,10 +87,18 @@ userCheck() {
   case $choice in
     1)
       read -p "Enter username to modify: " username
+      # Add username validation
+      if [[ ! "$username" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+        echo "Invalid username format"
+        exit 1
+      fi
       if id "$username" &>/dev/null; then
         if groups "$username" | grep -qwE 'sudo|wheel'; then
           # Remove from sudo group
-          sudo gpasswd -d "$username" sudo
+          if ! sudo gpasswd -d "$username" sudo; then
+            echo "Failed to remove admin privileges from $username"
+            exit 1
+          fi
           echo "Removed admin privileges from $username"
         else
           # Add to sudo group

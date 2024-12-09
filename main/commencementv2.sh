@@ -3,8 +3,8 @@ os="undeclared"
 checkNetworkConnection() {
     echo "Checking network connectivity..."
     
-    # Try to ping Google's DNS server
-    if ! ping -c 1 8.8.8.8 &> /dev/null; then
+    # Add timeout to ping to prevent hanging
+    if ! ping -c 1 -W 5 8.8.8.8 &> /dev/null; then
         echo "No network connectivity detected. Attempting fixes..."
         
         # Check NetworkManager.conf
@@ -74,7 +74,10 @@ commencementUbuntu(){
   echo "Please ensure the /etc/apt/sources.list file is correct"
   read -p "Press Enter to continue"
   # Update everything
-  apt update -y
+  apt update -y || {
+    echo "Failed to update package lists. Check your internet connection and sources.list"
+    return 1
+  }
   apt upgrade -y
 
   # Detect if snap is installed
@@ -318,6 +321,15 @@ main(){
     echo "Script needs to be run as root!"
     exit 2
   fi
+
+  # Check for required commands
+  for cmd in systemctl sed grep ip ping; do
+      if ! command -v $cmd &>/dev/null; then
+          echo "Required command '$cmd' not found. Please install it first."
+          exit 1
+      fi
+  done
+
   detectOs
 }
 

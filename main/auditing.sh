@@ -1,5 +1,22 @@
 #!/bin/bash
 
+# Add these at the start of the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AUDIT_DIR="${SCRIPT_DIR}/audit"
+
+# Check for root/sudo privileges
+if [[ $EUID -ne 0 ]] && ! sudo -v; then
+    echo "This script must be run with sudo privileges"
+    exit 1
+fi
+
+# Check for required commands
+for cmd in auditctl ausearch systemctl debsums; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Required command not found: $cmd"
+        exit 1
+    fi
+done
 
 userCheck() {
     if [ -f "audit/userAudit.sh" ]; then
@@ -40,10 +57,13 @@ start_enable_auditd() {
     echo "Starting and enabling auditd:"
     if ! sudo systemctl start auditd; then
         echo "Error: Unable to start auditd"
+        return 1
     fi
     if ! sudo systemctl enable auditd; then
         echo "Error: Unable to enable auditd"
+        return 1
     fi
+    return 0
 }
 
 audit_actions() {
