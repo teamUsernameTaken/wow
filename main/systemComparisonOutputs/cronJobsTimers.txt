@@ -1,0 +1,20 @@
+User Cron Jobs:
+No user crontab found.
+\nSystemd Timers:
+NEXT                        LEFT          LAST                        PASSED     UNIT                           ACTIVATES
+Thu 2024-12-12 23:31:52 PST 24min left    Thu 2024-12-12 22:32:55 PST 34min ago  anacron.timer                  anacron.service
+Fri 2024-12-13 00:00:00 PST 52min left    n/a                         n/a        dpkg-db-backup.timer           dpkg-db-backup.service
+Fri 2024-12-13 00:00:00 PST 52min left    Thu 2024-12-12 22:22:19 PST 45min ago  logrotate.timer                logrotate.service
+Fri 2024-12-13 03:54:59 PST 4h 47min left Mon 2024-12-09 15:38:00 PST 3 days ago apt-daily.timer                apt-daily.service
+Fri 2024-12-13 05:45:07 PST 6h left       Thu 2024-12-12 23:00:47 PST 6min ago   man-db.timer                   man-db.service
+Fri 2024-12-13 06:10:14 PST 7h left       Thu 2024-12-12 22:37:20 PST 30min ago  apt-daily-upgrade.timer        apt-daily-upgrade.service
+Fri 2024-12-13 06:52:56 PST 7h left       Thu 2024-12-12 23:01:28 PST 5min ago   motd-news.timer                motd-news.service
+Fri 2024-12-13 07:32:44 PST 8h left       Mon 2024-12-09 15:38:00 PST 3 days ago fwupd-refresh.timer            fwupd-refresh.service
+Fri 2024-12-13 22:27:19 PST 23h left      Thu 2024-12-12 22:27:19 PST 40min ago  update-notifier-download.timer update-notifier-download.service
+Fri 2024-12-13 22:37:19 PST 23h left      Thu 2024-12-12 22:37:19 PST 30min ago  systemd-tmpfiles-clean.timer   systemd-tmpfiles-clean.service
+Sun 2024-12-15 03:10:50 PST 2 days left   Mon 2024-12-09 15:38:00 PST 3 days ago e2scrub_all.timer              e2scrub_all.service
+Mon 2024-12-16 01:06:22 PST 3 days left   Mon 2024-12-09 15:38:00 PST 3 days ago fstrim.timer                   fstrim.service
+Tue 2024-12-17 22:03:12 PST 4 days left   Mon 2024-12-09 15:38:03 PST 3 days ago update-notifier-motd.timer     update-notifier-motd.service
+
+13 timers listed.
+Pass --all to see loaded but inactive timers, too.

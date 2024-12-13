@@ -1,0 +1,86 @@
+Loaded Kernel Modules:
+Module                  Size  Used by
+xt_recent              24576  0
+isofs                  61440  2
+crct10dif_pclmul       12288  1
+polyval_clmulni        12288  0
+polyval_generic        12288  1 polyval_clmulni
+ghash_clmulni_intel    16384  0
+sha256_ssse3           32768  0
+vmw_balloon            28672  0
+sha1_ssse3             32768  0
+aesni_intel           356352  0
+crypto_simd            16384  1 aesni_intel
+cryptd                 24576  2 crypto_simd,ghash_clmulni_intel
+ip6t_REJECT            12288  1
+nf_reject_ipv6         24576  1 ip6t_REJECT
+vsock_loopback         12288  0
+vmw_vsock_virtio_transport_common    57344  1 vsock_loopback
+xt_hl                  12288  22
+ip6t_rt                16384  3
+vmw_vsock_vmci_transport    49152  2
+vsock                  61440  7 vmw_vsock_virtio_transport_common,vsock_loopback,vmw_vsock_vmci_transport
+ipt_REJECT             12288  1
+nf_reject_ipv4         12288  1 ipt_REJECT
+xt_LOG                 16384  10
+nf_log_syslog          20480  10
+nft_limit              16384  13
+xt_limit               12288  0
+xt_addrtype            12288  4
+joydev                 32768  0
+xt_tcpudp              16384  78
+input_leds             12288  0
+xt_conntrack           12288  16
+snd_ens1371            36864  2
+nf_conntrack          196608  1 xt_conntrack
+nf_defrag_ipv6         24576  1 nf_conntrack
+nf_defrag_ipv4         12288  1 nf_conntrack
+snd_ac97_codec        196608  1 snd_ens1371
+gameport               20480  1 snd_ens1371
+nft_compat             20480  135
+serio_raw              20480  0
+nf_tables             368640  558 nft_compat,nft_limit
+ac97_bus               12288  1 snd_ac97_codec
+binfmt_misc            24576  1
+libcrc32c              12288  2 nf_conntrack,nf_tables
+nfnetlink              20480  2 nft_compat,nf_tables
+snd_pcm               192512  2 snd_ac97_codec,snd_ens1371
+snd_seq_midi           24576  0
+nls_iso8859_1          12288  2
+snd_seq_midi_event     16384  1 snd_seq_midi
+snd_rawmidi            57344  2 snd_seq_midi,snd_ens1371
+snd_seq               114688  2 snd_seq_midi,snd_seq_midi_event
+snd_seq_device         16384  3 snd_seq,snd_seq_midi,snd_rawmidi
+snd_timer              49152  2 snd_seq,snd_pcm
+snd                   143360  11 snd_seq,snd_seq_device,snd_timer,snd_ac97_codec,snd_pcm,snd_rawmidi,snd_ens1371
+soundcore              16384  1 snd
+vmw_vmci              106496  2 vmw_balloon,vmw_vsock_vmci_transport
+mac_hid                12288  0
+sch_fq_codel           24576  2
+vmwgfx                438272  4
+drm_ttm_helper         12288  1 vmwgfx
+ttm                   110592  2 vmwgfx,drm_ttm_helper
+msr                    12288  0
+parport_pc             53248  0
+ppdev                  24576  0
+lp                     28672  0
+parport                73728  3 parport_pc,lp,ppdev
+efi_pstore             12288  0
+ip_tables              32768  0
+x_tables               65536  12 xt_conntrack,nft_compat,xt_LOG,xt_tcpudp,xt_addrtype,xt_recent,ip6t_rt,ipt_REJECT,ip_tables,xt_limit,xt_hl,ip6t_REJECT
+autofs4                57344  2
+hid_generic            12288  0
+crc32_pclmul           12288  0
+psmouse               217088  0
+usbhid                 77824  0
+hid                   180224  2 usbhid,hid_generic
+mptspi                 24576  2
+ahci                   49152  2
+mptscsih               49152  1 mptspi
+libahci                53248  1 ahci
+e1000                 180224  0
+mptbase               118784  2 mptspi,mptscsih
+i2c_piix4              32768  0
+scsi_transport_spi     40960  1 mptspi
+pata_acpi              12288  0
+floppy                131072  1
