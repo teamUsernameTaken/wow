@@ -1,1 +1,1 @@
-# this is the v3 of the commencement script
+# this will be the commencement script that will combine with the open source codes! 
