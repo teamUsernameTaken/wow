@@ -1,10 +1,12 @@
 #!/usr/bin/bash
 
+#==========================================#
+#          SCRIPT INITIALIZATION           #
+#==========================================#
 cd "$(dirname "$0")" || exit 1
 
-PASSWORD="!@#123qweQWE"
 
-#----------------------------------#
+PASSWORD="!@#123qweQWE"
 
 info(){
 echo -e "\n================\nTeam Number: 17-0197\nUID: WVV7-DSWG-7XYD\nDecryption Key:\n================\n"
@@ -27,7 +29,10 @@ changeConfig() {
   fi
 }
 
-#----------all primary scripts------------------------#
+#==========================================#
+#          DISPLAY FUNCTIONS               #
+#==========================================#
+
 showLogo() {
     echo ".--.      .--.    ,-----.    .--.      .--. .---.  ";
     echo "|  |_     |  |  .'  .-,  '.  |  |_     |  | \   /  ";
@@ -41,19 +46,39 @@ showLogo() {
     echo "                                                   ";
 }
 
+#==========================================#
+#       INITIALIZATION FUNCTIONS           #
+#==========================================#
+
 commencement() {
     echo 'Welcome to the commencement script!'
     showLogo
     sudo bash commencementv2.sh
 }
 
-#------------ACTIONS----------------------#
+
+#==========================================#
+#         SSH KEYS REMOVAL                #
+#==========================================#
 
 remove_ssh_keys() {
     echo "Removing SSH keys..."
-    rm -f ~/.ssh/id_rsa*
-    echo "SSH keys removed"
+    # Backup existing keys
+    if [ -d ~/.ssh ]; then
+        backup_dir=~/.ssh/backup_$(date +%Y%m%d_%H%M%S)
+        mkdir -p "$backup_dir"
+        cp ~/.ssh/id_* "$backup_dir/" 2>/dev/null || true
+    fi
+    
+    # Remove all types of SSH keys
+    rm -f ~/.ssh/id_*
+    echo "SSH keys removed (backup created in $backup_dir if keys existed)"
 }
+
+
+#==========================================#
+#      PASSWORD CHANGE FUNCTIONS          #
+#==========================================#
 
 passwordChange(){
     # Get all users with UID >= 1000 (typical for regular users)
@@ -108,21 +133,9 @@ passwordChange(){
     echo "Password change operations completed."
 }
 
-configureSSHPort() {
-    echo "Configuring SSH port..."
-    read -p "Enter desired SSH port number (1024-65535): " new_ssh_port
-
-    # Validate port number
-    if [[ "$new_ssh_port" =~ ^[0-9]+$ ]] && [ "$new_ssh_port" -ge 1024 ] && [ "$new_ssh_port" -le 65535 ]; then
-        sudo sed -i "s/^#\?Port [0-9]*/Port $new_ssh_port/" /etc/ssh/sshd_config
-        echo "SSH port has been changed to $new_ssh_port"
-        # Restart SSH service to apply changes
-        sudo systemctl restart sshd
-    else
-        echo "Invalid port number. Please enter a number between 1024 and 65535"
-        return 1
-    fi
-}
+#==========================================#
+#     SYSTEM CLEANUP FUNCTIONS             #
+#==========================================#
 
 systemCleanup() {
     local PS3="Select cleanup option: "
@@ -165,162 +178,9 @@ systemCleanup() {
     done
 }
 
-#-------------AUDITING SCANS---------------------#
-scan() {
-    sudo mkdir -p /var/quarantine
-    
-    echo "Starting system security scan..."
-
-    # ClamAV Section
-    if ! command -v clamscan &> /dev/null; then
-        echo "ClamAV is not installed. Installing now..."
-        sudo apt-get update
-        sudo apt-get install -y clamav
-    fi
-
-    # Update ClamAV virus definitions
-    echo "Updating ClamAV virus definitions..."
-    sudo freshclam
-
-    # Run ClamAV scan
-    echo "Starting ClamAV system scan..."
-    sudo clamscan -r / --exclude-dir="^/sys|^/proc|^/dev" --move=/var/quarantine
-    notify "ClamAV scan completed"
-
-    # RKHunter Section
-    if ! command -v rkhunter &> /dev/null; then
-        echo "RKHunter is not installed. Installing now..."
-        sudo apt-get update
-        sudo apt-get install -y rkhunter
-    fi
-
-    # Update RKHunter definitions
-    echo "Updating RKHunter definitions..."
-    sudo rkhunter --update
-
-    # Run RKHunter scan
-    echo "Starting RKHunter system scan..."
-    sudo rkhunter --check --skip-keypress --report-warnings-only
-    notify "RKHunter scan completed"
-
-    # Lynis Section
-    if ! command -v lynis &> /dev/null; then
-        echo "Lynis is not installed. Installing now..."
-        sudo apt-get update
-        sudo apt-get install -y lynis
-    fi
-
-    # Run Lynis audit
-    echo "Starting Lynis system audit..."
-    sudo lynis audit system --quick
-    # For detailed report: sudo lynis audit system
-    notify "Lynis audit completed"
-
-    # View Lynis report
-    echo "Generating Lynis report..."
-    if [ -f "/var/log/lynis.log" ]; then
-        echo "Lynis log available at: /var/log/lynis.log"
-        echo "Lynis report available at: /var/log/lynis-report.dat"
-    fi
-
-    echo "All security scans completed!"
-}
-
-#-------------CONFIGURATION OPTIONS---------------------#
-
-config() {
-    local PS3="Select configuration option: "
-    local options=(
-        "Secure FTP"
-        "Install/Configure OSSEC"
-        "Setup Encrypted Directory"
-        "Disable USB Ports"
-        "Run Source List"
-        "Close Open Ports"
-        "Configure Bind9"
-        "Back"
-    )
-
-    select opt in "${options[@]}"
-    do
-        case $opt in
-            "Secure FTP")
-                if [ -f "config/secureFTP.sh" ]; then
-                    sudo bash config/secureFTP.sh
-                else
-                    echo "Error: secureFTP.sh not found in current directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Install/Configure OSSEC")
-                if [ -f "config/OSSEC.sh" ]; then
-                    sudo bash config/OSSEC.sh
-                else
-                    echo "Error: OSSEC.sh not found in current directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Setup Encrypted Directory")
-                if [ -f "config/encryptedDirectory.sh" ]; then
-                    sudo bash config/encryptedDirectory.sh
-                else
-                    echo "Error: encryptedDirectory.sh not found in config directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Disable USB Ports")
-                if [ -f "config/USB_disable.sh" ]; then
-                    sudo bash config/USB_disable.sh
-                else
-                    echo "Error: USB_disable.sh not found in config directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Run Source List")
-                if [ -f "config/sourceslist.sh" ]; then
-                    echo "Running sourcelist.sh..."
-                    sudo bash config/sourceslist.sh
-                else
-                    echo "Error: sourcelist.sh not found in current directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Close Open Ports")
-                if [ -f "config/closeOpenPorts.sh" ]; then
-                    sudo bash config/closeOpenPorts.sh
-                else
-                    echo "Error: closeOpenPorts.sh not found in current directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Configure Bind9")
-                if [ -f "config/bind9.sh" ]; then
-                    # Run in a subshell to prevent environment contamination
-                    (sudo bash config/bind9.sh)
-                    # Reset the terminal after execution
-                    reset
-                else
-                    echo "Error: bind9.sh not found in config directory"
-                    exit 1
-                fi
-                break
-                ;;
-            "Back")
-                break
-                ;;
-            *) 
-                echo "Invalid option $REPLY"
-                ;;
-        esac
-    done
-}
-
+#==========================================#
+#         MENU AND UI FUNCTIONS            #
+#==========================================#
 selectionScreen(){
     PS3="Select item please: "
 
@@ -330,7 +190,7 @@ selectionScreen(){
         "Commencement"
         "Password Change" 
         "System Cleanup"
-        "Configuration Options"
+        "Run All Configs"
     )
 
     while true; do
@@ -342,7 +202,7 @@ selectionScreen(){
                 3) commencement; break;;
                 4) passwordChange; break;;
                 5) systemCleanup; break;;
-                6) config; break;;
+                6) sudo bash allConfigs.sh; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Unknown choice $REPLY"; break;
             esac
@@ -355,16 +215,12 @@ menu() {
     selectionScreen
 }
 
+#==========================================#
+#        DEPENDENCY CHECK             #
+#==========================================#
 checkDependencies() {
     local required_scripts=(
-        "config/secureFTP.sh"
-        "config/OSSEC.sh"
-        "config/encryptedDirectory.sh"
-        "config/USB_disable.sh"
-        "config/sourceslist.sh"
-        "config/closeOpenPorts.sh"
-        "config/bind9.sh"
-        "commencementv2.sh"
+        "allConfigs.sh"
     )
 
     local missing_scripts=()
@@ -381,6 +237,9 @@ checkDependencies() {
     fi
 }
 
+#==========================================#
+#           MAIN EXECUTION                 #
+#==========================================#
 main() {
     checkDependencies
     menu
