@@ -1,16 +1,22 @@
 #!/bin/bash
 
-# Add these at the start of the script
+#==========================================#
+#              AUDITING SCRIPT             #
+#   Purpose: Comprehensive system auditing #
+#   Author: Team 17-0197                  #
+#==========================================#
+
+# Script initialization and directory setup
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AUDIT_DIR="${SCRIPT_DIR}/audit"
 
-# Check for root/sudo privileges
+# Privilege check
 if [[ $EUID -ne 0 ]] && ! sudo -v; then
     echo "This script must be run with sudo privileges"
     exit 1
 fi
 
-# Check for required commands
+# Dependencies check
 for cmd in auditctl ausearch systemctl debsums; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo "Required command not found: $cmd"
@@ -18,6 +24,12 @@ for cmd in auditctl ausearch systemctl debsums; do
     fi
 done
 
+#==========================================#
+#           USER AUDITING                  #
+# Purpose: Executes user-specific audits   #
+# Input: None                              #
+# Output: User audit results               #
+#==========================================#
 userCheck() {
     if [ -f "audit/userAudit.sh" ]; then
         sudo bash audit/userAudit.sh
@@ -27,6 +39,12 @@ userCheck() {
     fi
 }
 
+#==========================================#
+#           AUDIT RULES                    #
+# Purpose: Configures system audit rules   #
+# Monitors: /etc/passwd, /etc/shadow       #
+# Output: Confirmation of rules added      #
+#==========================================#
 add_audit_rules() {
     echo "Adding Audit Rules:"
     local rules_file="/etc/audit/rules.d/audit.rules"
@@ -53,6 +71,12 @@ add_audit_rules() {
     echo "Audit rules added and AuditD restarted successfully"
 }
 
+#==========================================#
+#           AUDITD SERVICE                 #
+# Purpose: Manages audit daemon            #
+# Actions: Starts and enables auditd       #
+# Output: Service status confirmation      #
+#==========================================#
 start_enable_auditd() {
     echo "Starting and enabling auditd:"
     if ! sudo systemctl start auditd; then
@@ -66,6 +90,12 @@ start_enable_auditd() {
     return 0
 }
 
+#==========================================#
+#           AUDIT ACTIONS                  #
+# Purpose: Executes audit_actions.sh       #
+# Input: None                              #
+# Output: Audit action results             #
+#==========================================#
 audit_actions() {
     if [ -f "audit/audit_actions.sh" ]; then
         sudo bash audit/audit_actions.sh
@@ -75,6 +105,12 @@ audit_actions() {
     fi
 }
 
+#==========================================#
+#           SHADOW MONITORING              #
+# Purpose: Monitors shadow file access     #
+# Monitors: /etc/shadow                    #
+# Output: Access attempts log              #
+#==========================================#
 setup_shadow_monitoring() {
     echo "Setting up shadow file access monitoring:"
     sudo auditctl -w /etc/shadow -p wa -k shadow_access
@@ -82,18 +118,36 @@ setup_shadow_monitoring() {
     echo "Look for: Any attempts to access or modify the shadow file"
 }
 
+#==========================================#
+#           AUDIT CHECKS                   #
+# Purpose: Performs specific audit checks  #
+# Types:                                   #
+#  - AppArmor status                      #
+#  - AVC messages                         #
+#  - System calls                         #
+#  - File access                          #
+#  - User changes                         #
+#  - Command execution                    #
+#  - Login attempts                       #
+#  - Package integrity                    #
+#  - Directory analysis                   #
+#  - System logs                          #
+#  - Service status                       #
+#==========================================#
 check_audit_details() {
     local check_type="$1"
     echo "Performing audit check: $check_type"
     
     case "$check_type" in
         "apparmor")
+            # Check AppArmor profiles and enforcement status
             if ! sudo aa-status; then
                 echo "Error: Unable to check AppArmor status"
             fi
             echo "Look for: Enabled profiles and any reported errors"
             ;;
         "avc")
+            # Check Access Vector Cache for security events
             sudo ausearch -m avc
             sudo ausearch -m avc -ts today
             echo "Look for: Denied operations and their contexts"
@@ -150,6 +204,12 @@ check_audit_details() {
     esac
 }
 
+#==========================================#
+#           AUDIT LOG CHECKER              #
+# Purpose: Interactive menu for audits     #
+# Input: User menu selection              #
+# Output: Selected audit results          #
+#==========================================#
 check_audit_logs() {
     while true; do
         echo -e "\nAudit Log Check Menu:"
@@ -199,6 +259,12 @@ check_audit_logs() {
     done
 }
 
+#==========================================#
+#           MENU DISPLAY                   #
+# Purpose: Shows main program menu        #
+# Input: None                             #
+# Output: Menu options                    #
+#==========================================#
 show_menu() {
     cat << EOF
 Audit and Security Menu:
@@ -213,6 +279,12 @@ Enter your choice:
 EOF
 }
 
+#==========================================#
+#           MAIN FUNCTION                  #
+# Purpose: Main program loop              #
+# Input: User menu selections             #
+# Output: Program execution flow          #
+#==========================================#
 main() {
     while true; do
         show_menu
@@ -234,4 +306,5 @@ main() {
     done
 }
 
+# Execute main program
 main
